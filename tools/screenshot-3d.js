@@ -1,6 +1,6 @@
 // Screenshots studio-3d.html through its main states at 390 / 768 / 1440.
 // Usage: node tools/screenshot-3d.js
-//   FONT_CACHE=dir  serve Google Fonts from css.txt + map.txt (see assets-src/make-assets.js)
+//   FONT_CACHE=dir  serve Google Fonts from css.txt + map.txt (directory with css.txt + map.txt, see tools/render-assets.js)
 //   THREE_CACHE=dir serve three.min.js, OrbitControls.js, RoomEnvironment.js locally
 const path = require('path');
 const fs = require('fs');
