@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>I-Talk Studio 3D</title>
+<meta name="description" content="Masuk ke studio I-Talk dalam 3D. Jelajahi studio, kenali topik ERP dan Odoo, lalu rakit setup siaranmu sendiri.">
+<meta name="theme-color" content="#201d1b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="I-Talk Studio 3D">
+<meta property="og:description" content="Jelajahi studio podcast Pritech dalam 3D dan rakit setup siaranmu. Kamis, 8 Oktober 2026.">
+<meta property="og:image" content="assets/og-share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Full-screen 3D studio. Canvas fills the screen, UI floats above it in four zones:
+   top bar, intro card, mode switch + builder dock (bottom), info panel (side / bottom sheet). */
+.itk-app {
+  --itk-accent: #f26a30;
+  --itk-deep: #d8521c;
+  --itk-ink: #201d1b;
+  --itk-ink-2: #2a2522;
+  --itk-cream: #fdfbf8;
+  --itk-cream-2: #f7f2ec;
+  --itk-taupe: #b5a99c;
+  --itk-taupe-d: #8a7d71;
+  --itk-glass: rgba(32,29,27,.72);
+  --itk-line: rgba(253,251,248,.14);
+  --itk-head: 'IBM Plex Sans', system-ui, sans-serif;
+  --itk-body: 'Nunito', system-ui, sans-serif;
+  --itk-ease: cubic-bezier(.2,.8,.2,1);
+  position: fixed; inset: 0; overflow: hidden;
+  background: var(--itk-ink); color: var(--itk-cream);
+  font-family: var(--itk-body); line-height: 1.5; -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+html, body { margin: 0; height: 100%; background: #201d1b; }
+.itk-app *, .itk-app *::before, .itk-app *::after { box-sizing: border-box; }
+:where(.itk-app) :where(h1, h2, h3, p) { margin: 0; }
+:where(.itk-app) button { font: inherit; color: inherit; }
+:where(.itk-app) a { color: inherit; }
+.itk-app [hidden] { display: none !important; }
+.itk-app :focus-visible { outline: 3px solid var(--itk-accent); outline-offset: 3px; }
+
+.itk-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.itk-canvas:active { cursor: grabbing; }
+.itk-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 55%, transparent 55%, rgba(21,19,17,.7)); }
+.itk-grain {
+  position: absolute; inset: 0; pointer-events: none; opacity: .08; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* loader */
+.itk-loader {
+  position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--itk-ink);
+  transition: opacity .8s var(--itk-ease), visibility .8s;
+}
+.itk-loader.itk-done { opacity: 0; visibility: hidden; }
+.itk-loader-inner { display: grid; justify-items: center; gap: 18px; text-align: center; padding: 0 24px; }
+.itk-loader-title { font-family: var(--itk-head); font-weight: 700; font-size: 44px; letter-spacing: -.03em; }
+.itk-loader-title span { color: var(--itk-accent); }
+.itk-loader-bar { width: 200px; height: 3px; border-radius: 3px; background: rgba(253,251,248,.12); overflow: hidden; }
+.itk-loader-bar i { display: block; height: 100%; width: 0; background: var(--itk-accent); transition: width .3s; }
+.itk-loader p { font-size: 14px; color: var(--itk-taupe); }
+
+/* top bar */
+.itk-top {
+  position: absolute; z-index: 20; left: 0; right: 0; top: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 0;
+  pointer-events: none;
+}
+.itk-top > * { pointer-events: auto; }
+.itk-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--itk-head); font-weight: 700; font-size: 16px; letter-spacing: .16em; }
+.itk-logo img { height: 30px; width: auto; }
+.itk-logo-mark { width: 22px; height: 22px; border-radius: 7px; background: var(--itk-accent); display: grid; place-items: center; }
+.itk-logo-mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--itk-ink); }
+.itk-top-right { display: flex; align-items: center; gap: 8px; }
+.itk-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px;
+  background: var(--itk-glass); border: 1px solid var(--itk-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font-family: var(--itk-head); font-weight: 700; font-size: 12px; letter-spacing: .14em; white-space: nowrap;
+}
+.itk-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--itk-accent); box-shadow: 0 0 0 3px rgba(242,106,48,.25), 0 0 12px 2px rgba(242,106,48,.9); animation: itk-blink 1.4s steps(2, jump-none) infinite; }
+@keyframes itk-blink { 50% { opacity: .25; } }
+.itk-cd-mini { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.itk-cd-mini b { color: var(--itk-accent); font-weight: 700; }
+.itk-hide-sm { display: none; }
+@media (min-width: 640px) { .itk-hide-sm { display: inline-flex; } .itk-top { padding-left: 28px; padding-right: 28px; } }
+
+/* intro card */
+.itk-intro {
+  position: absolute; z-index: 15; left: 16px; right: 16px; top: calc(70px + env(safe-area-inset-top, 0px));
+  max-width: 470px; padding: 22px; border-radius: 22px;
+  background: linear-gradient(160deg, rgba(32,29,27,.86), rgba(32,29,27,.64));
+  border: 1px solid var(--itk-line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: opacity .6s var(--itk-ease), transform .6s var(--itk-ease), visibility .6s;
+}
+.itk-intro.itk-gone { opacity: 0; transform: translateY(-14px); visibility: hidden; }
+.itk-kicker { display: inline-flex; align-items: center; gap: 8px; font-family: var(--itk-head); font-weight: 600; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--itk-accent); }
+.itk-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.itk-eq i { width: 3px; background: currentColor; border-radius: 2px; transform-origin: bottom; animation: itk-eq 1.1s ease-in-out infinite; }
+.itk-eq i:nth-child(1) { height: 45%; animation-delay: -.2s; } .itk-eq i:nth-child(2) { height: 100%; animation-delay: -.5s; }
+.itk-eq i:nth-child(3) { height: 65%; animation-delay: -.8s; } .itk-eq i:nth-child(4) { height: 85%; animation-delay: -.35s; }
+@keyframes itk-eq { 50% { transform: scaleY(.4); } }
+.itk-title { font-family: var(--itk-head); font-weight: 700; font-size: clamp(56px, 16vw, 92px); line-height: .86; letter-spacing: -.045em; margin-top: 10px; }
+.itk-title span { color: var(--itk-accent); }
+.itk-intro .itk-sub { margin-top: 12px; font-family: var(--itk-head); font-weight: 600; font-size: clamp(18px, 4.6vw, 22px); line-height: 1.2; text-wrap: balance; }
+.itk-intro .itk-meta { margin-top: 10px; font-size: 15px; color: rgba(253,251,248,.75); }
+.itk-intro .itk-meta b { color: var(--itk-cream); }
+.itk-intro-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.itk-intro-foot { margin-top: 14px; font-size: 13px; color: var(--itk-taupe); }
+.itk-intro-foot a { color: var(--itk-cream); font-weight: 700; }
+@media (min-width: 900px) { .itk-intro { left: 40px; top: calc(96px + env(safe-area-inset-top, 0px)); padding: 30px; } }
+@media (max-width: 639px) and (max-height: 760px) { .itk-intro .itk-meta, .itk-intro-foot { display: none; } .itk-title { font-size: 52px; } }
+
+.itk-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 12px 20px; border-radius: 999px; border: 1.5px solid transparent; cursor: pointer;
+  font-weight: 800; font-size: 15px; text-decoration: none; white-space: nowrap;
+  transition: transform .25s var(--itk-ease), background-color .25s, box-shadow .25s, border-color .25s;
+}
+.itk-btn svg { width: 17px; height: 17px; flex: none; }
+.itk-btn:hover { transform: translateY(-2px); }
+.itk-btn--primary { background: var(--itk-accent); color: var(--itk-ink); box-shadow: 0 10px 28px rgba(242,106,48,.35); }
+.itk-btn--ghost { background: rgba(253,251,248,.06); border-color: rgba(253,251,248,.3); color: var(--itk-cream); }
+.itk-btn--ghost:hover { border-color: var(--itk-cream); }
+.itk-btn--ink { background: var(--itk-ink); color: var(--itk-cream); }
+.itk-btn--line { border-color: var(--itk-ink); color: var(--itk-ink); background: transparent; }
+
+/* hotspots (positioned from 3D each frame) */
+.itk-hotspots { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+.itk-hs {
+  position: absolute; left: 0; top: 0; width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; cursor: pointer; pointer-events: auto;
+  display: grid; place-items: center; transition: opacity .35s;
+}
+.itk-hs.itk-off { opacity: 0; pointer-events: none; }
+.itk-hs::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; border: 2px solid var(--itk-accent); animation: itk-pulse 2.2s ease-out infinite; }
+.itk-hs::after { content: ""; width: 16px; height: 16px; border-radius: 50%; background: var(--itk-accent); box-shadow: 0 0 0 4px rgba(253,251,248,.92), 0 0 20px 6px rgba(242,106,48,.8); transition: transform .2s; }
+.itk-hs:hover::after, .itk-hs:focus-visible::after { transform: scale(1.25); }
+@keyframes itk-pulse { from { transform: scale(.6); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
+.itk-hs span {
+  position: absolute; left: 50%; top: calc(100% - 2px); transform: translateX(-50%);
+  padding: 5px 11px; border-radius: 999px; background: rgba(32,29,27,.85); border: 1px solid var(--itk-line);
+  font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none;
+}
+@media (max-width: 639px) { .itk-hs span { display: none; } }
+
+/* bottom: mode switch + hint */
+.itk-bottom {
+  position: absolute; z-index: 25; left: 0; right: 0; bottom: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 10px;
+  padding: 0 12px calc(14px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+.itk-bottom > * { pointer-events: auto; }
+.itk-hint { font-size: 13px; color: rgba(253,251,248,.8); background: rgba(32,29,27,.6); padding: 6px 14px; border-radius: 999px; transition: opacity .5s; text-align: center; }
+.itk-hint.itk-gone { opacity: 0; }
+.itk-modes { display: inline-flex; padding: 5px; gap: 4px; border-radius: 999px; background: var(--itk-glass); border: 1px solid var(--itk-line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.itk-modes button {
+  min-height: 42px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+  font-weight: 800; font-size: 14px; color: rgba(253,251,248,.75); transition: background-color .25s, color .25s;
+}
+.itk-modes button[aria-pressed="true"] { background: var(--itk-cream); color: var(--itk-ink); }
+.itk-modes .itk-info-btn { color: var(--itk-accent); }
+
+/* builder dock */
+.itk-dock {
+  width: min(100%, 860px); min-width: 0; padding: 14px; border-radius: 22px;
+  background: rgba(32,29,27,.86); border: 1px solid var(--itk-line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  transform: translateY(16px); opacity: 0; visibility: hidden; transition: transform .5s var(--itk-ease), opacity .5s, visibility .5s;
+}
+.itk-dock.itk-open { transform: none; opacity: 1; visibility: visible; }
+.itk-steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.itk-steps::-webkit-scrollbar { display: none; }
+.itk-step {
+  flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px; border-radius: 999px; border: 1px solid transparent;
+  background: transparent; cursor: pointer; font-weight: 800; font-size: 13px; color: rgba(253,251,248,.6);
+}
+.itk-step b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(253,251,248,.1); font-family: var(--itk-head); font-size: 12px; }
+.itk-step[aria-current="step"] { color: var(--itk-cream); border-color: var(--itk-line); background: rgba(253,251,248,.06); }
+.itk-step[aria-current="step"] b, .itk-step.itk-done b { background: var(--itk-accent); color: var(--itk-ink); }
+.itk-step-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.itk-step-head h2 { font-family: var(--itk-head); font-weight: 700; font-size: 20px; letter-spacing: -.01em; }
+.itk-step-head p { font-size: 13px; color: var(--itk-taupe); }
+.itk-options { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(210px, 1fr); min-width: 0; scroll-snap-type: x mandatory; gap: 10px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.itk-options::-webkit-scrollbar { display: none; }
+.itk-opt {
+  scroll-snap-align: start; text-align: left; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center;
+  padding: 12px; border-radius: 16px; border: 1.5px solid var(--itk-line); background: rgba(253,251,248,.04); cursor: pointer;
+  transition: border-color .2s, background-color .2s, transform .2s;
+}
+.itk-opt:hover { border-color: rgba(253,251,248,.4); }
+.itk-opt[aria-checked="true"] { border-color: var(--itk-accent); background: rgba(242,106,48,.12); }
+.itk-swatch { grid-row: span 2; width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(253,251,248,.2); }
+.itk-opt strong { font-family: var(--itk-head); font-size: 15px; font-weight: 700; }
+.itk-opt small { font-size: 12.5px; color: rgba(253,251,248,.66); line-height: 1.35; }
+.itk-dock-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; }
+.itk-dock-actions .itk-btn { min-height: 42px; padding: 8px 18px; font-size: 14px; }
+.itk-linkbtn { background: none; border: 0; cursor: pointer; font-weight: 800; font-size: 14px; color: rgba(253,251,248,.7); padding: 8px 4px; }
+.itk-linkbtn:hover { color: var(--itk-cream); }
+
+/* info panel */
+.itk-scrim { position: absolute; inset: 0; z-index: 35; background: rgba(21,19,17,.35); opacity: 0; visibility: hidden; transition: opacity .4s, visibility .4s; }
+.itk-scrim.itk-open { opacity: 1; visibility: visible; }
+.itk-panel {
+  position: absolute; z-index: 40; left: 0; right: 0; bottom: 0; max-height: 72%; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--itk-cream); color: var(--itk-ink); border-radius: 24px 24px 0 0;
+  padding: 12px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateY(105%); visibility: hidden; transition: transform .55s var(--itk-ease), visibility .55s;
+  box-shadow: 0 -20px 60px rgba(0,0,0,.4);
+}
+.itk-panel.itk-open { transform: none; visibility: visible; }
+.itk-grip { width: 42px; height: 5px; border-radius: 3px; background: var(--itk-taupe); margin: 0 auto 12px; }
+.itk-panel-head { position: relative; padding-right: 54px; }
+.itk-close {
+  position: absolute; right: -4px; top: -4px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+  border: 1px solid rgba(138,125,113,.35); background: var(--itk-cream-2); display: grid; place-items: center;
+}
+.itk-close svg { width: 18px; height: 18px; }
+.itk-panel h3 { font-family: var(--itk-head); font-weight: 700; font-size: 26px; line-height: 1.1; margin-top: 6px; text-wrap: balance; }
+.itk-panel-body { display: grid; gap: 14px; margin-top: 14px; }
+.itk-panel-body > * { animation: itk-rise .5s var(--itk-ease) both; }
+.itk-panel-body > *:nth-child(2) { animation-delay: .05s; } .itk-panel-body > *:nth-child(3) { animation-delay: .1s; }
+.itk-panel-body > *:nth-child(4) { animation-delay: .15s; } .itk-panel-body > *:nth-child(5) { animation-delay: .2s; }
+@keyframes itk-rise { from { opacity: 0; transform: translateY(10px); } }
+.itk-panel-body p { color: #4a423c; }
+.itk-big { font-family: var(--itk-head); font-weight: 600; font-size: 19px; line-height: 1.3; color: var(--itk-ink) !important; }
+.itk-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+.itk-list li { display: grid; grid-template-columns: 30px 1fr; gap: 8px; }
+.itk-list b { font-family: var(--itk-head); color: var(--itk-deep); }
+.itk-list--dots li::before { content: ""; width: 8px; height: 8px; margin: 8px 0 0 6px; border-radius: 50%; background: var(--itk-accent); }
+.itk-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.itk-cd { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.itk-cd div { text-align: center; padding: 10px 4px; border-radius: 14px; background: var(--itk-cream-2); border: 1px solid rgba(138,125,113,.3); }
+.itk-cd strong { display: block; font-family: var(--itk-head); font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.itk-cd small { display: block; margin-top: 4px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--itk-taupe-d); }
+.itk-person { display: flex; align-items: center; gap: 14px; }
+.itk-avatar { width: 84px; height: 84px; flex: none; border-radius: 50%; overflow: hidden; background: linear-gradient(160deg, var(--itk-accent), var(--itk-deep)); box-shadow: 0 0 0 4px var(--itk-cream), 0 0 0 6px var(--itk-accent), 0 0 24px rgba(242,106,48,.5); }
+.itk-avatar img, .itk-avatar svg { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.itk-person strong { display: block; font-family: var(--itk-head); font-size: 24px; }
+.itk-summary { display: grid; gap: 8px; }
+.itk-summary div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 12px; background: var(--itk-cream-2); }
+.itk-summary span { color: var(--itk-taupe-d); font-weight: 700; font-size: 14px; }
+.itk-summary strong { font-family: var(--itk-head); font-size: 15px; text-align: right; }
+.itk-tour { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(138,125,113,.3); }
+.itk-tour button { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(138,125,113,.4); background: transparent; cursor: pointer; font-weight: 800; font-size: 14px; }
+.itk-tour span { font-family: var(--itk-head); font-weight: 600; font-size: 13px; color: var(--itk-taupe-d); font-variant-numeric: tabular-nums; }
+@media (min-width: 900px) {
+  .itk-panel { left: auto; top: 16px; right: 16px; bottom: 16px; width: 420px; max-height: none; border-radius: 26px; padding: 28px; transform: translateX(110%); }
+  .itk-grip { display: none; }
+  .itk-scrim { background: transparent; }
+}
+
+/* fallback */
+.itk-fallback { position: absolute; inset: 0; z-index: 70; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--itk-ink); }
+.itk-fallback div { max-width: 420px; display: grid; gap: 14px; justify-items: center; }
+.itk-fallback h2 { font-family: var(--itk-head); font-size: 28px; }
+
+.itk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .itk-app *, .itk-app *::before, .itk-app *::after { animation: none !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="itk-app">
+  <canvas class="itk-canvas" aria-label="Studio podcast I-Talk dalam 3D. Seret untuk memutar." role="img"></canvas>
+  <div class="itk-vignette" aria-hidden="true"></div>
+  <div class="itk-grain" aria-hidden="true"></div>
+
+  <div class="itk-loader" data-loader>
+    <div class="itk-loader-inner">
+      <span class="itk-pill"><span class="itk-dot"></span>ON AIR</span>
+      <div class="itk-loader-title">I<span>-</span>Talk</div>
+      <div class="itk-loader-bar"><i data-loader-bar></i></div>
+      <p>Menyiapkan studio...</p>
+    </div>
+  </div>
+
+  <header class="itk-top">
+    <a class="itk-logo" href="index.html" aria-label="Pritech, buka halaman I-Talk">
+      <img src="assets/logo.png" alt="Pritech" hidden onload="this.hidden=false;this.nextElementSibling.hidden=true;this.nextElementSibling.nextSibling.textContent=''" onerror="this.remove()">
+      <span class="itk-logo-mark"><i></i></span>PRITECH
+    </a>
+    <div class="itk-top-right">
+      <span class="itk-pill itk-hide-sm itk-cd-mini" data-cd-mini aria-label="Hitung mundur"></span>
+      <span class="itk-pill"><span class="itk-dot" aria-hidden="true"></span>ON AIR</span>
+    </div>
+  </header>
+
+  <section class="itk-intro" data-intro aria-labelledby="itk-title">
+    <span class="itk-kicker"><span class="itk-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Podcast radio Pritech</span>
+    <h1 class="itk-title" id="itk-title">I<span>-</span>Talk</h1>
+    <p class="itk-sub">Apa itu ERP, dan kenalan dengan framework Odoo.</p>
+    <p class="itk-meta">Bareng <b>Handi</b>, Direktur PT Pritech Indonesia. <b data-bind="dateLong"></b>, <span data-bind="timeLabel"></span>, live di <span data-bind="platform"></span>.</p>
+    <div class="itk-intro-actions">
+      <button class="itk-btn itk-btn--primary" type="button" data-go="explore">Masuk ke studio
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="itk-btn itk-btn--ghost" type="button" data-go="build">Rakit setup-mu</button>
+    </div>
+    <p class="itk-intro-foot">Lebih suka versi biasa? <a href="index.html">Buka halaman undangan</a></p>
+  </section>
+
+  <div class="itk-hotspots" data-hotspots></div>
+
+  <div class="itk-bottom">
+    <p class="itk-hint itk-gone" data-hint>Seret untuk memutar studio. Ketuk titik oranye untuk detail.</p>
+    <div class="itk-dock" data-dock role="region" aria-label="Rakit setup studio">
+      <div class="itk-steps" data-steps role="list"></div>
+      <div class="itk-step-head"><h2 data-step-title></h2><p data-step-count></p></div>
+      <div class="itk-options" data-options role="radiogroup"></div>
+      <div class="itk-dock-actions">
+        <button class="itk-linkbtn" type="button" data-step-prev>Kembali</button>
+        <button class="itk-btn itk-btn--primary" type="button" data-step-next>Lanjut</button>
+      </div>
+    </div>
+    <nav class="itk-modes" aria-label="Mode">
+      <button type="button" data-mode="explore" aria-pressed="false">Jelajahi</button>
+      <button type="button" data-mode="build" aria-pressed="false">Rakit setup</button>
+      <button type="button" class="itk-info-btn" data-mode="info" aria-pressed="false">Info acara</button>
+    </nav>
+  </div>
+
+  <div class="itk-scrim" data-scrim></div>
+  <aside class="itk-panel" data-panel role="dialog" aria-modal="false" aria-labelledby="itk-panel-title">
+    <div class="itk-grip" aria-hidden="true"></div>
+    <div class="itk-panel-head">
+      <div data-panel-head></div>
+      <button class="itk-close" type="button" aria-label="Tutup" data-close>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="itk-panel-body" data-panel-body></div>
+    <div class="itk-tour" data-tour>
+      <button type="button" data-tour-prev>Sebelumnya</button>
+      <span data-tour-count></span>
+      <button type="button" data-tour-next>Berikutnya</button>
+    </div>
+  </aside>
+
+  <!-- Bio pembicara: ganti dua kalimat di bawah -->
+  <p class="itk-sr" data-bio>[Kalimat pertama bio Handi, misalnya pengalamannya membantu perusahaan menerapkan ERP.] [Kalimat kedua, misalnya fokusnya saat ini di Pritech.]</p>
+
+  <div class="itk-fallback" data-fallback hidden>
+    <div>
+      <h2>Studio 3D belum bisa dibuka di perangkat ini</h2>
+      <p>Browser kamu belum mendukung WebGL. Semua info acara tetap ada di halaman undangan.</p>
+      <a class="itk-btn itk-btn--primary" href="index.html">Buka halaman undangan</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+/* =========================================================
+   EVENT CONFIG: ubah data acara di sini
+   ========================================================= */
+var ITK = {
+  title: 'I-Talk: Apa itu ERP dan kenalan dengan framework Odoo',
+  date: '2026-10-08',        // YYYY-MM-DD
+  time: '',                  // jam mulai WIB, contoh '19:00'. Kosong = tampil [TIME]
+  durationMin: 90,
+  platform: '[PLATFORM]',    // contoh 'YouTube Pritech Indonesia'
+  streamUrl: '#',            // tautan siaran langsung
+  pageUrl: ''                // tautan untuk dibagikan. Kosong = alamat halaman ini
+};
+
+/* Pilihan "Rakit setup". Warna mengikuti palet Pritech. */
+var BUILD = [
+  { key: 'mic', label: 'Mikrofon', hint: 'Pilih mikrofon untuk kedua kursi', options: [
+    { id: 'dinamis', name: 'Dinamis Klasik', desc: 'Bodi charcoal, cincin oranye. Andalan siaran bicara.', sw: ['#201d1b', '#f26a30'] },
+    { id: 'kondensor', name: 'Kondensor Cream', desc: 'Lebih peka, cocok untuk ruangan yang tenang.', sw: ['#f7f2ec', '#8a7d71'] },
+    { id: 'broadcast', name: 'Broadcast Oranye', desc: 'Bodi panjang dengan busa pelindung.', sw: ['#f26a30', '#201d1b'] } ] },
+  { key: 'head', label: 'Headphone', hint: 'Yang dipakai tamu di meja', options: [
+    { id: 'charcoal', name: 'Charcoal', desc: 'Bantalan cream, nyaman dipakai lama.', sw: ['#201d1b', '#f7f2ec'] },
+    { id: 'cream', name: 'Cream', desc: 'Tampil bersih di kamera.', sw: ['#f7f2ec', '#201d1b'] },
+    { id: 'oranye', name: 'Oranye', desc: 'Warna khas Pritech.', sw: ['#f26a30', '#201d1b'] } ] },
+  { key: 'chair', label: 'Kursi', hint: 'Untuk host dan tamu', options: [
+    { id: 'lounge', name: 'Lounge', desc: 'Empuk, enak buat ngobrol panjang.', sw: ['#b5a99c', '#201d1b'] },
+    { id: 'kerja', name: 'Kursi kerja', desc: 'Tegak dan fokus, seperti rapat.', sw: ['#201d1b', '#f26a30'] },
+    { id: 'stool', name: 'Stool bar', desc: 'Santai, gaya studio kreatif.', sw: ['#8a7d71', '#f7f2ec'] } ] },
+  { key: 'light', label: 'Lampu', hint: 'Suasana studio saat siaran', options: [
+    { id: 'hangat', name: 'Hangat', desc: 'Cahaya oranye lembut, suasana sore.', sw: ['#f26a30', '#fdfbf8'] },
+    { id: 'malam', name: 'Siaran malam', desc: 'Redup dengan aksen oranye tajam.', sw: ['#201d1b', '#d8521c'] },
+    { id: 'terang', name: 'Studio terang', desc: 'Terang dan bersih untuk rekaman video.', sw: ['#fdfbf8', '#b5a99c'] } ] }
+];
+
+(function () {
+  'use strict';
+  var app = document.querySelector('.itk-app');
+  app.addEventListener('scroll', function () { app.scrollLeft = 0; app.scrollTop = 0; });
+  var $ = function (s, el) { return (el || app).querySelector(s); };
+  var $$ = function (s, el) { return Array.prototype.slice.call((el || app).querySelectorAll(s)); };
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  /* ---------- event data ---------- */
+  var DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  var MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  var dp = ITK.date.split('-').map(Number);
+  var hasTime = /^\d{1,2}[:.]\d{2}$/.test(ITK.time);
+  var tp = hasTime ? ITK.time.split(/[:.]/).map(Number) : [0, 0];
+  var startUTC = Date.UTC(dp[0], dp[1] - 1, dp[2], tp[0] - 7, tp[1]);
+  var endUTC = startUTC + ITK.durationMin * 60000;
+  var pageUrl = ITK.pageUrl || location.href.split('#')[0];
+  var D = {
+    dateLong: DAYS[new Date(Date.UTC(dp[0], dp[1] - 1, dp[2])).getUTCDay()] + ', ' + dp[2] + ' ' + MONTHS[dp[1] - 1] + ' ' + dp[0],
+    timeLabel: (hasTime ? ITK.time.replace(':', '.') : '[TIME]') + ' WIB',
+    platform: ITK.platform
+  };
+  $$('[data-bind]').forEach(function (el) { el.textContent = D[el.getAttribute('data-bind')]; });
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var stamp = function (ms) { var d = new Date(ms); return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + '00Z'; };
+  var ymd = function (y, m, d) { var t = new Date(Date.UTC(y, m - 1, d)); return t.getUTCFullYear() + pad(t.getUTCMonth() + 1) + pad(t.getUTCDate()); };
+  var details = 'Podcast radio Pritech bareng Handi, Direktur PT Pritech Indonesia. Topik: apa itu ERP dan kenalan dengan framework Odoo. Live di ' + ITK.platform + ': ' + ITK.streamUrl;
+  var gcal = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(ITK.title) +
+    '&dates=' + (hasTime ? stamp(startUTC) + '/' + stamp(endUTC) : ymd(dp[0], dp[1], dp[2]) + '/' + ymd(dp[0], dp[1], dp[2] + 1)) +
+    '&details=' + encodeURIComponent(details) + '&location=' + encodeURIComponent(ITK.platform);
+  function waLink(extra) {
+    var t = 'Halo! Ada I-Talk dari Pritech, podcast radio soal ERP dan framework Odoo bareng Handi (Direktur PT Pritech Indonesia).\n' +
+      D.dateLong + ', ' + D.timeLabel + ', live di ' + ITK.platform + '.\n' + (extra ? extra + '\n' : '') + pageUrl;
+    return 'https://wa.me/?text=' + encodeURIComponent(t);
+  }
+  function downloadIcs() {
+    var e = function (s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); };
+    var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PT Pritech Indonesia//I-Talk//ID', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+      'UID:italk-' + ITK.date + '@pritech', 'DTSTAMP:' + stamp(Date.now()),
+      hasTime ? 'DTSTART:' + stamp(startUTC) : 'DTSTART;VALUE=DATE:' + ymd(dp[0], dp[1], dp[2]),
+      hasTime ? 'DTEND:' + stamp(endUTC) : 'DTEND;VALUE=DATE:' + ymd(dp[0], dp[1], dp[2] + 1),
+      'SUMMARY:' + e(ITK.title), 'DESCRIPTION:' + e(details), 'LOCATION:' + e(ITK.platform), 'URL:' + e(ITK.streamUrl),
+      'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:I-Talk segera mulai', 'TRIGGER:-PT30M', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'];
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([L.join('\r\n')], { type: 'text/calendar;charset=utf-8' }));
+    a.download = 'i-talk-pritech.ics'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  /* ---------- countdown ---------- */
+  function parts() {
+    var diff = Math.max(0, startUTC - Date.now());
+    return { d: Math.floor(diff / 864e5), h: Math.floor(diff / 36e5) % 24, m: Math.floor(diff / 6e4) % 60, s: Math.floor(diff / 1e3) % 60, live: diff === 0 };
+  }
+  function tick() {
+    var p = parts();
+    var mini = $('[data-cd-mini]');
+    mini.innerHTML = p.live ? 'SEDANG SIARAN' : '<b>' + p.d + '</b>H ' + '<b>' + pad(p.h) + '</b>J ' + '<b>' + pad(p.m) + '</b>M ' + '<b>' + pad(p.s) + '</b>D';
+    $$('[data-cd]').forEach(function (el) { el.textContent = pad(p[el.getAttribute('data-cd')]); });
+  }
+  tick(); setInterval(tick, 1000);
+
+  /* ---------- selections ---------- */
+  var sel = { mic: 'dinamis', head: 'charcoal', chair: 'lounge', light: 'hangat' };
+  try { var saved = JSON.parse(localStorage.getItem('itk-setup') || 'null'); if (saved) Object.keys(sel).forEach(function (k) { if (saved[k]) sel[k] = saved[k]; }); } catch (e) {}
+  function saveSel() { try { localStorage.setItem('itk-setup', JSON.stringify(sel)); } catch (e) {} }
+  function optName(key) { var s = BUILD.filter(function (b) { return b.key === key; })[0]; return s.options.filter(function (o) { return o.id === sel[key]; })[0].name; }
+
+  /* ---------- WebGL check ---------- */
+  var canvas = $('.itk-canvas');
+  var renderer;
+  try {
+    if (!window.THREE) throw new Error('three missing');
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
+  } catch (e) {
+    $('[data-fallback]').hidden = false; $('[data-loader]').classList.add('itk-done');
+    return;
+  }
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false; // treat brand hex values as sRGB
+  var mobile = window.matchMedia('(max-width: 639px)').matches;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 1.75));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  var C = { ink: 0x201d1b, ink2: 0x2a2522, ink3: 0x3a3430, taupe: 0xb5a99c, taupeD: 0x8a7d71, cream: 0xfdfbf8, cream2: 0xf7f2ec, accent: 0xf26a30, deep: 0xd8521c };
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(C.ink);
+  scene.fog = new THREE.Fog(C.ink, 13, 30);
+  var pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+
+  var camera = new THREE.PerspectiveCamera(40, 1, 0.1, 80);
+  var controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.07;
+  controls.enablePan = false;
+  controls.minDistance = 1.6; controls.maxDistance = 11;
+  controls.minPolarAngle = 0.35; controls.maxPolarAngle = 1.48;
+  controls.rotateSpeed = 0.6; controls.zoomSpeed = 0.7;
+  controls.autoRotateSpeed = 0.45;
+
+  /* ---------- helpers ---------- */
+  function M(color, rough, metal, extra) {
+    var m = new THREE.MeshStandardMaterial(Object.assign({ color: color, roughness: rough == null ? 0.6 : rough, metalness: metal || 0, envMapIntensity: 0.45 }, extra || {}));
+    return m;
+  }
+  function mesh(geo, mat, x, y, z) { var o = new THREE.Mesh(geo, mat); o.position.set(x || 0, y || 0, z || 0); o.castShadow = true; o.receiveShadow = true; return o; }
+  function rr(w, h, r) {
+    var s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+    s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+    s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+    s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+    return s;
+  }
+  function slab(w, d, r, h, mat, bevel) {
+    var g = new THREE.ExtrudeGeometry(rr(w, d, r), { depth: h, bevelEnabled: !!bevel, bevelThickness: bevel || 0, bevelSize: bevel || 0, bevelSegments: 3, curveSegments: 14 });
+    g.rotateX(-Math.PI / 2);
+    var o = new THREE.Mesh(g, mat); o.castShadow = true; o.receiveShadow = true; return o;
+  }
+  function between(a, b, r, mat) {
+    var dir = new THREE.Vector3().subVectors(b, a), len = dir.length();
+    var o = mesh(new THREE.CylinderGeometry(r, r, len, 14), mat);
+    o.position.copy(a).addScaledVector(dir, 0.5);
+    o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    return o;
+  }
+  function canvasTex(w, h, draw) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
+    t.userData.draw = function () { draw(c.getContext('2d'), w, h); t.needsUpdate = true; };
+    t.userData.draw();
+    return t;
+  }
+  function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  var easeIO = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+  var easeBack = function (t) { var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+
+  /* ---------- shared materials ---------- */
+  var mat = {
+    ink: M(C.ink, .55, .1), ink2: M(C.ink2, .8), ink3: M(C.ink3, .7),
+    metal: M(C.ink, .3, .8), steel: M(C.taupe, .25, .9),
+    taupe: M(C.taupe, .6), taupeD: M(C.taupeD, .7), cream: M(C.cream2, .55), wood: M(C.taupe, .45, 0),
+    led: M(C.accent, .4, 0, { emissive: C.accent, emissiveIntensity: 1.6 }),
+    glowCream: M(C.cream, .4, 0, { emissive: C.cream, emissiveIntensity: 1.2 })
+  };
+
+  /* ---------- room ---------- */
+  var root = new THREE.Group(); scene.add(root);
+  var ground = mesh(new THREE.CircleGeometry(40, 64), M(0x1a1715, .95)); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.18; ground.castShadow = false; root.add(ground);
+  var platform = mesh(new THREE.CylinderGeometry(4.3, 4.4, 0.18, 96), mat.ink2, 0, -0.09, 0); root.add(platform);
+  var ring = new THREE.Mesh(new THREE.TorusGeometry(4.33, 0.022, 8, 160), mat.led); ring.rotation.x = Math.PI / 2; root.add(ring);
+  var rug = mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.012, 80), M(C.ink3, .95), 0, 0.006, 0.1); root.add(rug);
+  var rugEdge = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.01, 6, 120), mat.taupeD); rugEdge.rotation.x = Math.PI / 2; rugEdge.position.y = 0.013; rugEdge.position.z = 0.1; root.add(rugEdge);
+
+  var WALL_R = 4, ARC = 1.3;
+  var wall = new THREE.Mesh(new THREE.CylinderGeometry(WALL_R, WALL_R, 3.4, 96, 1, true, Math.PI - ARC, ARC * 2), M(C.ink2, .9, 0, { side: THREE.DoubleSide }));
+  wall.position.y = 1.7; wall.receiveShadow = true; root.add(wall);
+  function arcCurve(r, y, a0, a1) {
+    var pts = []; for (var i = 0; i <= 48; i++) { var a = a0 + (a1 - a0) * i / 48; pts.push(new THREE.Vector3(r * Math.sin(a), y, r * Math.cos(a))); }
+    return new THREE.CatmullRomCurve3(pts);
+  }
+  root.add(new THREE.Mesh(new THREE.TubeGeometry(arcCurve(WALL_R - .03, 0.12, Math.PI - ARC, Math.PI + ARC), 96, 0.016, 6), mat.led));
+  root.add(new THREE.Mesh(new THREE.TubeGeometry(arcCurve(WALL_R - .03, 3.38, Math.PI - ARC, Math.PI + ARC), 96, 0.02, 6), mat.taupeD));
+  function onWall(obj, angle, y, inset) {
+    var r = WALL_R - (inset || 0.05);
+    obj.position.set(r * Math.sin(angle), y, r * Math.cos(angle));
+    obj.lookAt(0, y, 0); root.add(obj); return obj;
+  }
+  // acoustic foam panels
+  var foamTex = canvasTex(256, 256, function (ctx, w, h) {
+    ctx.fillStyle = '#8a7d71'; ctx.fillRect(0, 0, w, h);
+    for (var x = 0; x < w; x += 32) {
+      var g = ctx.createLinearGradient(x, 0, x + 32, 0);
+      g.addColorStop(0, '#5e554d'); g.addColorStop(.45, '#b5a99c'); g.addColorStop(1, '#5e554d');
+      ctx.fillStyle = g; ctx.fillRect(x, 0, 32, h);
+    }
+  });
+  var foamTexR = foamTex.clone(); foamTexR.center.set(.5, .5); foamTexR.rotation = Math.PI / 2; foamTexR.needsUpdate = true;
+  [-1, 1].forEach(function (side) {
+    for (var c = 0; c < 3; c++) for (var r = 0; r < 3; r++) {
+      var p = mesh(new THREE.BoxGeometry(0.5, 0.5, 0.07), [mat.taupeD, mat.taupeD, mat.taupeD, mat.taupeD, M(C.cream, .95, 0, { map: (c + r) % 2 ? foamTexR : foamTex }), mat.taupeD]);
+      onWall(p, Math.PI + side * (0.62 + c * 0.14), 1.05 + r * 0.56, 0.06);
+    }
+  });
+  // ON AIR sign
+  var signTex = canvasTex(1024, 360, function (ctx, w, h) {
+    ctx.fillStyle = '#201d1b'; ctx.fillRect(0, 0, w, h);
+    var g = ctx.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w / 1.6);
+    g.addColorStop(0, '#ff9a68'); g.addColorStop(.55, '#f26a30'); g.addColorStop(1, '#d8521c');
+    roundRect(ctx, 24, 24, w - 48, h - 48, 60); ctx.fillStyle = g; ctx.fill();
+    ctx.font = '700 190px "IBM Plex Sans", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(253,251,248,.9)'; ctx.shadowBlur = 30; ctx.fillStyle = '#fdfbf8'; ctx.fillText('ON AIR', w / 2, h / 2 + 8);
+  });
+  var signFaceMat = M(C.cream, .35, 0, { map: signTex, emissive: C.cream, emissiveMap: signTex, emissiveIntensity: 1 });
+  var sign = new THREE.Group();
+  sign.add(mesh(new THREE.BoxGeometry(1.5, 0.56, 0.12), mat.ink));
+  var signFace = new THREE.Mesh(new THREE.PlaneGeometry(1.42, 0.5), signFaceMat); signFace.position.z = 0.061; sign.add(signFace);
+  onWall(sign, Math.PI, 2.62, 0.1);
+  var signLight = new THREE.PointLight(C.accent, 1.2, 4.5, 2); signLight.position.set(0, 2.5, -WALL_R + 0.6); root.add(signLight);
+  // wall clock (live time)
+  var clockTex = canvasTex(512, 512, function (ctx, w) {
+    var c = w / 2, now = new Date();
+    ctx.clearRect(0, 0, w, w);
+    ctx.fillStyle = '#201d1b'; ctx.beginPath(); ctx.arc(c, c, c, 0, 7); ctx.fill();
+    ctx.fillStyle = '#f7f2ec'; ctx.beginPath(); ctx.arc(c, c, c - 26, 0, 7); ctx.fill();
+    for (var i = 0; i < 60; i++) {
+      var a = i * Math.PI / 30, r1 = c - 44, r2 = c - (i % 5 ? 52 : 70);
+      ctx.strokeStyle = i % 5 ? '#b5a99c' : '#201d1b'; ctx.lineWidth = i % 5 ? 3 : 9; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(c + Math.sin(a) * r1, c - Math.cos(a) * r1); ctx.lineTo(c + Math.sin(a) * r2, c - Math.cos(a) * r2); ctx.stroke();
+    }
+    ctx.font = '700 30px "IBM Plex Sans", sans-serif'; ctx.fillStyle = '#d8521c'; ctx.textAlign = 'center'; ctx.fillText('WIB', c, c + 92);
+    var hr = (now.getHours() % 12 + now.getMinutes() / 60) * Math.PI / 6, mn = (now.getMinutes() + now.getSeconds() / 60) * Math.PI / 30, sc = now.getSeconds() * Math.PI / 30;
+    function hand(a, len, wdt, col) { ctx.strokeStyle = col; ctx.lineWidth = wdt; ctx.beginPath(); ctx.moveTo(c - Math.sin(a) * 24, c + Math.cos(a) * 24); ctx.lineTo(c + Math.sin(a) * len, c - Math.cos(a) * len); ctx.stroke(); }
+    hand(hr, 120, 16, '#201d1b'); hand(mn, 175, 10, '#201d1b'); hand(sc, 185, 4, '#f26a30');
+    ctx.fillStyle = '#f26a30'; ctx.beginPath(); ctx.arc(c, c, 12, 0, 7); ctx.fill();
+  });
+  var clock = new THREE.Group();
+  var clockBody = mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.07, 48), mat.ink); clockBody.rotation.x = Math.PI / 2; clock.add(clockBody);
+  var clockFace = new THREE.Mesh(new THREE.CircleGeometry(0.33, 48), M(C.cream, .5, 0, { map: clockTex, emissive: C.cream, emissiveMap: clockTex, emissiveIntensity: .25 })); clockFace.position.z = 0.036; clock.add(clockFace);
+  onWall(clock, Math.PI + 0.33, 2.55, 0.06);
+  setInterval(function () { clockTex.userData.draw(); }, 1000);
+
+  // pendant lamps
+  var lampLights = [];
+  [-0.92, 0.92].forEach(function (x) {
+    var g = new THREE.Group();
+    g.add(mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.8, 6), mat.ink, 0, 0.9, 0));
+    var shade = mesh(new THREE.CylinderGeometry(0.05, 0.22, 0.2, 40, 1, true), M(C.ink, .45, .3, { side: THREE.DoubleSide })); g.add(shade);
+    var inner = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), mat.glowCream); inner.rotation.x = Math.PI / 2; inner.position.y = -0.09; g.add(inner);
+    var l = new THREE.PointLight(C.cream, 0.7, 4, 2); l.position.y = -0.25; g.add(l); lampLights.push(l);
+    g.position.set(x, 2.3, 0.05); root.add(g);
+  });
+
+  /* ---------- desk + monitor ---------- */
+  var desk = new THREE.Group(); root.add(desk);
+  var top = slab(2.7, 1.1, 0.5, 0.05, mat.wood, 0.015); top.position.y = 0.73; desk.add(top);
+  var body = slab(2.2, 0.72, 0.34, 0.7, mat.ink2); body.position.y = 0.02; desk.add(body);
+  desk.add(mesh(new THREE.BoxGeometry(1.7, 0.022, 0.01), mat.led, 0, 0.6, 0.362));
+  desk.add(mesh(new THREE.BoxGeometry(1.7, 0.022, 0.01), mat.led, 0, 0.6, -0.362));
+  var monTex = canvasTex(1024, 600, function (ctx, w, h) {
+    var t = performance.now() / 1000;
+    ctx.fillStyle = '#201d1b'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#f26a30'; ctx.font = '700 34px "IBM Plex Sans", sans-serif'; ctx.fillText('SUSUNAN ACARA', 56, 78);
+    ctx.fillStyle = '#f26a30'; ctx.beginPath(); ctx.arc(w - 70, 66, 12, 0, 7); ctx.globalAlpha = .5 + .5 * Math.abs(Math.sin(t * 2)); ctx.fill(); ctx.globalAlpha = 1;
+    var items = ['Pembukaan', 'Apa itu ERP dan kenapa bisnis butuh', 'Kenalan dengan framework Odoo', 'Tanya jawab live', 'Penutup'];
+    items.forEach(function (it, i) {
+      ctx.fillStyle = '#d8521c'; ctx.font = '700 30px "IBM Plex Sans", sans-serif'; ctx.fillText('0' + (i + 1), 56, 150 + i * 62);
+      ctx.fillStyle = '#fdfbf8'; ctx.font = '600 32px "Nunito", sans-serif'; ctx.fillText(it, 120, 150 + i * 62);
+    });
+    for (var i = 0; i < 64; i++) {
+      var bh = 8 + Math.abs(Math.sin(i * .5 + t * 3) * Math.cos(i * .17 - t)) * 56;
+      ctx.fillStyle = 'rgba(242,106,48,' + (.45 + .55 * (i % 7) / 7) + ')';
+      ctx.fillRect(56 + i * 14.2, 520 - bh / 2, 7, bh);
+    }
+  });
+  var monitor = new THREE.Group();
+  monitor.add(mesh(new THREE.BoxGeometry(0.86, 0.5, 0.035), mat.ink));
+  var screen = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.46), M(C.ink, .3, 0, { map: monTex, emissive: C.cream, emissiveMap: monTex, emissiveIntensity: .9 })); screen.position.z = 0.019; monitor.add(screen);
+  monitor.add(mesh(new THREE.BoxGeometry(0.06, 0.24, 0.04), mat.metal, 0, -0.33, -0.03));
+  monitor.add(mesh(new THREE.BoxGeometry(0.3, 0.015, 0.18), mat.metal, 0, -0.45, -0.03));
+  monitor.position.set(0, 1.23, -0.32); monitor.rotation.x = -0.06; desk.add(monitor);
+  // standee with event info
+  var standTex = canvasTex(600, 1000, function (ctx, w, h) {
+    ctx.fillStyle = '#f26a30'; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#d8521c'; ctx.lineWidth = 60; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-40, 180); ctx.bezierCurveTo(200, 60, 360, 40, 640, -60); ctx.stroke();
+    ctx.save(); ctx.translate(w / 2, h / 2 + 40); ctx.rotate(-.04); ctx.fillStyle = '#f7f2ec'; ctx.fillRect(-250, -330, 500, 700); ctx.restore();
+    ctx.beginPath(); ctx.moveTo(60, 250); ctx.lineTo(w - 60, 210); ctx.lineTo(w - 60, h - 90); ctx.lineTo(60, h - 90); ctx.closePath(); ctx.fillStyle = '#201d1b'; ctx.fill();
+    ctx.fillStyle = '#201d1b'; ctx.font = '700 30px "IBM Plex Sans", sans-serif'; ctx.fillText('PRITECH PODCAST', 60, 120);
+    ctx.fillStyle = '#f26a30'; ctx.font = '600 24px "IBM Plex Sans", sans-serif'; ctx.fillText('ON AIR', 100, 330);
+    ctx.fillStyle = '#fdfbf8'; ctx.font = '700 150px "IBM Plex Sans", sans-serif'; ctx.fillText('I-Talk', 92, 480);
+    ctx.font = '600 34px "Nunito", sans-serif'; ['Apa itu ERP, dan', 'kenalan dengan', 'framework Odoo.'].forEach(function (l, i) { ctx.fillText(l, 100, 560 + i * 44); });
+    ctx.fillStyle = '#f26a30'; ctx.font = '700 32px "IBM Plex Sans", sans-serif'; ctx.fillText(D.dateLong, 100, 760);
+    ctx.fillStyle = '#fdfbf8'; ctx.fillText(D.timeLabel, 100, 802);
+    ctx.fillStyle = 'rgba(253,251,248,.75)'; ctx.font = '600 28px "Nunito", sans-serif'; ctx.fillText('bersama Handi', 100, 870);
+  });
+  var standee = new THREE.Group();
+  standee.add(mesh(new THREE.BoxGeometry(0.92, 1.52, 0.03), mat.ink, 0, 1.06, 0));
+  var poster = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 1.47), M(C.cream, .6, 0, { map: standTex, emissive: C.cream, emissiveMap: standTex, emissiveIntensity: .18 })); poster.position.set(0, 1.06, 0.017); standee.add(poster);
+  standee.add(between(new THREE.Vector3(-0.3, 0, -0.25), new THREE.Vector3(-0.3, 0.4, 0), 0.012, mat.metal));
+  standee.add(between(new THREE.Vector3(0.3, 0, -0.25), new THREE.Vector3(0.3, 0.4, 0), 0.012, mat.metal));
+  standee.position.set(-2.85, 0, 1.75); standee.lookAt(0, 0, 7); root.add(standee);
+
+  /* ---------- swappable props ---------- */
+  var grilleTex = canvasTex(128, 128, function (ctx, w) {
+    ctx.fillStyle = '#3a3430'; ctx.fillRect(0, 0, w, w); ctx.fillStyle = '#141210';
+    for (var y = 0; y < w; y += 8) for (var x = (y / 8) % 2 * 4; x < w; x += 8) { ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill(); }
+  });
+  grilleTex.wrapS = grilleTex.wrapT = THREE.RepeatWrapping; grilleTex.repeat.set(6, 3);
+
+  function makeMic(v) {
+    var g = new THREE.Group();
+    var bodyC = v === 'kondensor' ? C.cream2 : v === 'broadcast' ? C.accent : C.ink;
+    var ringC = v === 'kondensor' ? C.taupeD : v === 'broadcast' ? C.ink : C.accent;
+    var bm = M(bodyC, v === 'kondensor' ? .35 : .28, v === 'kondensor' ? .1 : .5);
+    var r = v === 'kondensor' ? 0.05 : 0.044, len = v === 'broadcast' ? 0.27 : 0.2;
+    g.add(mesh(new THREE.CylinderGeometry(r * .92, r, len, 32), bm, 0, len / 2, 0));
+    g.add(mesh(new THREE.CylinderGeometry(r + .004, r + .004, 0.026, 32), M(ringC, .3, .4), 0, len + .013, 0));
+    var gl = v === 'kondensor' ? 0.15 : 0.1;
+    var grille = M(C.ink3, .5, .6, { map: grilleTex });
+    g.add(mesh(new THREE.CylinderGeometry(r, r, gl, 32, 1, true), grille, 0, len + .026 + gl / 2, 0));
+    var cap = mesh(new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), grille, 0, len + .026 + gl, 0); g.add(cap);
+    if (v === 'broadcast') {
+      var foam = mesh(new THREE.SphereGeometry(0.075, 32, 20), M(C.deep, .95), 0, len + .09, 0); foam.scale.set(1, 1.25, 1); g.add(foam);
+    }
+    g.add(mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.06, 12), mat.metal, 0, -0.03, 0));
+    g.userData.headY = len + .03 + gl;
+    return g;
+  }
+  function makeHeadphones(v) {
+    var g = new THREE.Group();
+    var shell = M(v === 'cream' ? C.cream2 : v === 'oranye' ? C.accent : C.ink, .5, .15);
+    var cush = M(v === 'charcoal' ? C.cream2 : C.ink, .9);
+    var acc = M(v === 'oranye' ? C.ink : C.accent, .35, .3);
+    var band = mesh(new THREE.TorusGeometry(0.1, 0.012, 12, 40, Math.PI), shell); g.add(band);
+    var pad2 = mesh(new THREE.TorusGeometry(0.094, 0.008, 8, 30, Math.PI * .7), cush); pad2.rotation.z = Math.PI * .15; g.add(pad2);
+    [-1, 1].forEach(function (s) {
+      var cup = mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.036, 32), shell); cup.rotation.z = Math.PI / 2; cup.position.set(s * 0.104, -0.02, 0); g.add(cup);
+      var c2 = mesh(new THREE.TorusGeometry(0.038, 0.016, 10, 28), cush); c2.rotation.y = Math.PI / 2; c2.position.set(s * 0.082, -0.02, 0); g.add(c2);
+      var ringA = mesh(new THREE.TorusGeometry(0.04, 0.005, 6, 28), acc); ringA.rotation.y = Math.PI / 2; ringA.position.set(s * 0.123, -0.02, 0); g.add(ringA);
+      g.add(mesh(new THREE.BoxGeometry(0.012, 0.04, 0.02), acc, s * 0.1, 0.03, 0));
+    });
+    return g;
+  }
+  function makeChair(v) {
+    var g = new THREE.Group();
+    if (v === 'lounge') {
+      g.add(mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.03, 40), mat.metal, 0, 0.015, 0));
+      g.add(mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.36, 16), mat.metal, 0, 0.2, 0));
+      g.add(mesh(new THREE.CylinderGeometry(0.36, 0.34, 0.14, 40), mat.ink, 0, 0.44, 0));
+      g.add(mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 40), mat.taupe, 0, 0.53, 0));
+      var back = mesh(new THREE.CylinderGeometry(0.37, 0.36, 0.62, 40, 1, true, Math.PI * 1.1, Math.PI * .8), M(C.ink, .55, .1, { side: THREE.DoubleSide }), 0, 0.82, 0); g.add(back);
+      var backC = mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.5, 40, 1, true, Math.PI * 1.15, Math.PI * .7), M(C.taupe, .7, 0, { side: THREE.DoubleSide }), 0, 0.82, 0); g.add(backC);
+      g.userData.mouth = 1.12;
+    } else if (v === 'kerja') {
+      for (var i = 0; i < 5; i++) {
+        var a = i * Math.PI * 2 / 5;
+        var leg = mesh(new THREE.BoxGeometry(0.3, 0.03, 0.04), mat.metal, Math.cos(a) * 0.15, 0.07, Math.sin(a) * 0.15); leg.rotation.y = -a; g.add(leg);
+        g.add(mesh(new THREE.SphereGeometry(0.028, 12, 8), mat.ink, Math.cos(a) * 0.29, 0.03, Math.sin(a) * 0.29));
+      }
+      g.add(mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.38, 16), mat.steel, 0, 0.27, 0));
+      var seat = slab(0.5, 0.48, 0.1, 0.08, mat.ink, 0.01); seat.position.y = 0.47; g.add(seat);
+      var back2 = slab(0.46, 0.06, 0.03, 0.58, M(C.ink, .7)); back2.rotation.z = 0; back2.position.set(-0.25, 0.6, 0); back2.rotation.y = Math.PI / 2; back2.rotation.z = 0.12; g.add(back2);
+      g.add(mesh(new THREE.BoxGeometry(0.02, 0.06, 0.4), mat.led, -0.215, 0.8, 0));
+      [-1, 1].forEach(function (s) { g.add(mesh(new THREE.BoxGeometry(0.28, 0.03, 0.05), mat.ink, 0, 0.7, s * 0.25)); g.add(mesh(new THREE.BoxGeometry(0.03, 0.16, 0.03), mat.metal, 0, 0.6, s * 0.25)); });
+      g.userData.mouth = 1.18;
+    } else {
+      [0, 1, 2, 3].forEach(function (i) {
+        var a = Math.PI / 4 + i * Math.PI / 2;
+        g.add(between(new THREE.Vector3(Math.cos(a) * 0.22, 0, Math.sin(a) * 0.22), new THREE.Vector3(Math.cos(a) * 0.14, 0.72, Math.sin(a) * 0.14), 0.014, mat.metal));
+      });
+      var foot = mesh(new THREE.TorusGeometry(0.18, 0.012, 8, 40), mat.steel, 0, 0.3, 0); foot.rotation.x = Math.PI / 2; g.add(foot);
+      g.add(mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.07, 40), M(C.taupeD, .6), 0, 0.76, 0));
+      g.add(mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.025, 40), M(C.cream2, .7), 0, 0.805, 0));
+      var lb = mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.12, 30, 1, true, Math.PI * 1.2, Math.PI * .6), M(C.taupeD, .6, 0, { side: THREE.DoubleSide }), 0, 0.95, 0); g.add(lb);
+      g.userData.mouth = 1.4;
+    }
+    return g;
+  }
+
+  var host = { pos: new THREE.Vector3(-1.78, 0, 0), dir: 1 }, guest = { pos: new THREE.Vector3(1.78, 0, 0), dir: -1 };
+  var slots = { mic: [], head: null, chair: [] };
+  var armMat = mat.metal;
+  var arms = new THREE.Group(); root.add(arms);
+
+  function placeChairs(v) {
+    slots.chair.forEach(function (c) { root.remove(c); });
+    slots.chair = [host, guest].map(function (seat) {
+      var c = makeChair(v); c.position.copy(seat.pos); c.rotation.y = seat.dir > 0 ? 0 : Math.PI; root.add(c); return c;
+    });
+    return slots.chair;
+  }
+  function placeMics(v) {
+    slots.mic.forEach(function (m) { root.remove(m); });
+    while (arms.children.length) arms.remove(arms.children[0]);
+    var mouthY = (slots.chair[0] && slots.chair[0].userData.mouth) || 1.12;
+    slots.mic = [host, guest].map(function (seat) {
+      var s = seat.dir; // host on -x faces +x
+      var clamp = new THREE.Vector3(s * -0.75, 0.78, -0.42);
+      var elbow = new THREE.Vector3(s * -0.98, mouthY + 0.36, -0.36);
+      var mount = new THREE.Vector3(s * -1.1, mouthY - 0.02, -0.08);
+      var mouth = new THREE.Vector3(seat.pos.x + s * 0.22, mouthY + 0.02, 0);
+      arms.add(mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 16), armMat, clamp.x, clamp.y, clamp.z));
+      arms.add(between(clamp, elbow, 0.011, armMat));
+      arms.add(between(elbow, mount, 0.011, armMat));
+      arms.add(mesh(new THREE.SphereGeometry(0.022, 12, 10), mat.led, elbow.x, elbow.y, elbow.z));
+      var m = makeMic(v);
+      m.position.copy(mount);
+      var dir = new THREE.Vector3().subVectors(mouth, mount).normalize();
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      root.add(m); return m;
+    });
+    return slots.mic;
+  }
+  function placeHead(v) {
+    if (slots.head) root.remove(slots.head);
+    var h = makeHeadphones(v); h.position.set(0.88, 0.83, 0.26); h.rotation.set(-0.25, -0.5, 0.12); root.add(h); slots.head = h;
+    return [h];
+  }
+  function pop(list) {
+    if (reduce) return;
+    list.forEach(function (o) { o.scale.setScalar(0.6); o.userData.pop = performance.now(); });
+  }
+  placeChairs(sel.chair); placeMics(sel.mic); placeHead(sel.head);
+
+  /* ---------- lights + moods ---------- */
+  var hemi = new THREE.HemisphereLight(C.cream, C.ink, 0.35); scene.add(hemi);
+  var key = new THREE.SpotLight(C.cream, 1.5, 22, 0.62, 0.55, 1.2); key.position.set(3.2, 6.5, 5.2); key.target.position.set(0, 0.8, 0);
+  key.castShadow = true; key.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+  scene.add(key, key.target);
+  var rimL = new THREE.PointLight(C.accent, 1.3, 11, 2); rimL.position.set(-3.6, 2.6, -2.4);
+  var rimR = new THREE.PointLight(C.accent, 1.3, 11, 2); rimR.position.set(3.6, 2.6, -2.4);
+  var front = new THREE.PointLight(C.deep, 0.5, 12, 2); front.position.set(0, 1.4, 4.5);
+  scene.add(rimL, rimR, front);
+  var MOODS = {
+    hangat: { key: 1.5, hemi: .35, rim: 1.3, rimC: C.accent, led: 1.6, lamp: .7, exp: 1.0, bg: C.ink, fogN: 13, fogF: 30, front: .5 },
+    malam: { key: .55, hemi: .14, rim: 2.4, rimC: C.deep, led: 2.4, lamp: .35, exp: .92, bg: 0x171412, fogN: 9, fogF: 24, front: .9 },
+    terang: { key: 2.3, hemi: .75, rim: .45, rimC: C.accent, led: .8, lamp: 1.1, exp: 1.12, bg: C.ink3, fogN: 16, fogF: 36, front: .2 }
+  };
+  var moodNow = Object.assign({}, MOODS[sel.light]), moodTo = MOODS[sel.light];
+  var tmpC = new THREE.Color(), tmpC2 = new THREE.Color();
+  function applyMood(dt) {
+    var k = reduce ? 1 : Math.min(1, dt * 3.2);
+    ['key', 'hemi', 'rim', 'led', 'lamp', 'exp', 'fogN', 'fogF', 'front'].forEach(function (p) { moodNow[p] += (moodTo[p] - moodNow[p]) * k; });
+    key.intensity = moodNow.key; hemi.intensity = moodNow.hemi; rimL.intensity = rimR.intensity = moodNow.rim; front.intensity = moodNow.front;
+    tmpC.set(moodTo.rimC); rimL.color.lerp(tmpC, k); rimR.color.copy(rimL.color);
+    mat.led.emissiveIntensity = moodNow.led; lampLights.forEach(function (l) { l.intensity = moodNow.lamp; });
+    renderer.toneMappingExposure = moodNow.exp;
+    tmpC2.set(moodTo.bg); scene.background.lerp(tmpC2, k); scene.fog.color.copy(scene.background);
+    scene.fog.near = moodNow.fogN; scene.fog.far = moodNow.fogF;
+  }
+
+  /* ---------- camera views ---------- */
+  var narrow = function () { return camera.aspect < 0.85; };
+  function headWorld(i) { var m = slots.mic[i]; return m.localToWorld(new THREE.Vector3(0, m.userData.headY, 0)); }
+  var V = {
+    overview: function () { return narrow() ? { p: [0.4, 3.1, 9.8], t: [0, 1.25, 0] } : { p: [0.6, 2.7, 7.2], t: [0, 0.95, 0] }; },
+    mic: function () { var h = headWorld(1); return { p: [h.x + 0.9, h.y + 0.35, h.z + (narrow() ? 1.9 : 1.25)], t: [h.x, h.y - 0.04, h.z] }; },
+    listen: function () { var h = slots.head.position; return { p: [h.x + 0.55, h.y + 0.6, h.z + (narrow() ? 1.7 : 1.1)], t: [h.x, h.y, h.z] }; },
+    speaker: function () { return { p: [0.4, 1.6, narrow() ? 3.4 : 2.5], t: [1.75, 0.75, 0] }; },
+    clock: function () { var c = clock.getWorldPosition(new THREE.Vector3()); var d = narrow() ? 2.6 : 1.8; var n = c.clone().setY(0).normalize(); return { p: [c.x - n.x * d, c.y - 0.25, c.z - n.z * d], t: [c.x, c.y, c.z] }; },
+    agenda: function () { var s = screen.getWorldPosition(new THREE.Vector3()); return { p: [s.x + 0.15, s.y + 0.18, s.z + (narrow() ? 1.75 : 1.15)], t: [s.x, s.y, s.z] }; },
+    chairs: function () { return narrow() ? { p: [0.3, 2.6, 6.4], t: [0, 0.7, 0] } : { p: [0.4, 2.0, 4.6], t: [0, 0.7, 0] }; },
+    mood: function () { return narrow() ? { p: [5.5, 3.6, 8.5], t: [0, 1.1, -0.5] } : { p: [4.6, 2.9, 6.0], t: [0, 1.1, -0.6] }; }
+  };
+  var fly = null;
+  function flyTo(name, dur) {
+    var v = V[name](); var to = new THREE.Vector3().fromArray(v.p), tt = new THREE.Vector3().fromArray(v.t);
+    if (reduce) { camera.position.copy(to); controls.target.copy(tt); controls.update(); return; }
+    fly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: to, t1: tt, s: performance.now(), d: dur || 1300 };
+    controls.enabled = false;
+  }
+
+  /* ---------- hotspots ---------- */
+  var HS = [
+    { id: 'mic', label: 'Topik', aria: 'Mikrofon: topik siaran', pos: function () { return headWorld(1).add(new THREE.Vector3(0, 0.08, 0)); } },
+    { id: 'listen', label: 'Cara dengar', aria: 'Headphone: cara mendengarkan', pos: function () { return slots.head.position.clone().add(new THREE.Vector3(0, 0.12, 0)); } },
+    { id: 'speaker', label: 'Kursi tamu', aria: 'Kursi tamu: profil pembicara', pos: function () { return new THREE.Vector3(1.9, 1.05, 0); } },
+    { id: 'clock', label: 'Kapan?', aria: 'Jam dinding: tanggal dan waktu', pos: function () { return clock.getWorldPosition(new THREE.Vector3()); }, normal: true },
+    { id: 'agenda', label: 'Agenda', aria: 'Monitor: susunan acara', pos: function () { return screen.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.1, 0.02)); } }
+  ];
+  var hsWrap = $('[data-hotspots]');
+  HS.forEach(function (h) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'itk-hs itk-off'; b.setAttribute('aria-label', h.aria);
+    b.innerHTML = '<span>' + h.label + '</span>'; b.addEventListener('click', function () { openSpot(h.id); });
+    hsWrap.appendChild(b); h.el = b;
+  });
+  var v3 = new THREE.Vector3(), camDir = new THREE.Vector3();
+  function placeHotspots(show) {
+    var w = canvas.clientWidth, hgt = canvas.clientHeight;
+    HS.forEach(function (h) {
+      var p = h.pos(); v3.copy(p).project(camera);
+      var visible = show && v3.z < 1 && Math.abs(v3.x) < 1.05 && Math.abs(v3.y) < 1.05;
+      if (h.normal) { camDir.subVectors(camera.position, p); visible = visible && camDir.dot(p.clone().setY(0).multiplyScalar(-1)) > 0; }
+      h.el.classList.toggle('itk-off', !visible);
+      h.el.tabIndex = visible ? 0 : -1;
+      if (visible) h.el.style.transform = 'translate(' + ((v3.x + 1) / 2 * w).toFixed(1) + 'px,' + ((1 - v3.y) / 2 * hgt).toFixed(1) + 'px)';
+    });
+  }
+
+  /* ---------- panel content ---------- */
+  function cdHTML() { return '<div class="itk-cd"><div><strong data-cd="d">00</strong><small>Hari</small></div><div><strong data-cd="h">00</strong><small>Jam</small></div><div><strong data-cd="m">00</strong><small>Menit</small></div><div><strong data-cd="s">00</strong><small>Detik</small></div></div>'; }
+  var arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  var silhouette = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="40" r="17" fill="#201d1b" fill-opacity=".85"/><path d="M16 100c2-24 16-36 34-36s32 12 34 36z" fill="#201d1b" fill-opacity=".85"/></svg>';
+  var CONTENT = {
+    mic: { kicker: 'Mikrofon', title: 'Topik hari ini', body:
+      '<p class="itk-big">Apa itu ERP, dan kenalan dengan framework Odoo.</p>' +
+      '<p>Banyak bisnis masih mengandalkan spreadsheet yang tersebar di tiap divisi. Di episode ini kita bahas apa itu ERP, kapan sebuah bisnis butuh, dan kenapa Odoo sering dipilih perusahaan yang sedang tumbuh.</p>' +
+      '<ul class="itk-list itk-list--dots"><li>Tanda bisnis mulai butuh ERP</li><li>Cara kerja modul Odoo yang saling terhubung</li><li>Seberapa fleksibel Odoo mengikuti proses bisnis</li></ul>' },
+    listen: { kicker: 'Headphone', title: 'Cara dengar', body: function () { return '' +
+      '<p class="itk-big">Siaran langsung di ' + esc(ITK.platform) + '.</p>' +
+      '<p>Buka tautannya saat acara mulai. Tidak perlu daftar, cukup klik dan dengarkan.</p>' +
+      '<ul class="itk-list itk-list--dots"><li>Pakai headphone supaya suaranya lebih jelas</li><li>Siapkan pertanyaan untuk sesi tanya jawab</li><li>Ajak rekan kerja yang sedang memikirkan ERP</li></ul>' +
+      '<div class="itk-actions"><a class="itk-btn itk-btn--primary" href="' + esc(ITK.streamUrl) + '" target="_blank" rel="noopener">Tonton live</a><a class="itk-btn itk-btn--line" href="' + esc(waLink()) + '" target="_blank" rel="noopener">Bagikan via WhatsApp</a></div>'; } },
+    speaker: { kicker: 'Kursi tamu', title: 'Siapa yang bicara?', body: function () { return '' +
+      '<div class="itk-person"><div class="itk-avatar" data-avatar></div><div><strong>Handi</strong><span>Direktur PT Pritech Indonesia</span></div></div>' +
+      '<p>' + esc($('[data-bio]').textContent) + '</p>' +
+      '<p>Di sesi tanya jawab, Handi akan menjawab pertanyaan langsung, termasuk kasus dari bisnismu sendiri.</p>'; } },
+    clock: { kicker: 'Jam dinding', title: 'Catat waktunya', body: function () { return '' +
+      '<p class="itk-big">' + esc(D.dateLong) + '<br>' + esc(D.timeLabel) + '</p>' + cdHTML() +
+      '<div class="itk-actions"><button class="itk-btn itk-btn--ink" type="button" data-ics>Tambah ke kalender</button><a class="itk-btn itk-btn--line" href="' + esc(gcal) + '" target="_blank" rel="noopener">Google Calendar</a></div>'; } },
+    agenda: { kicker: 'Monitor', title: 'Susunan acara', body:
+      '<ol class="itk-list"><li><b>01</b><span>Pembukaan</span></li><li><b>02</b><span>Apa itu ERP dan kenapa bisnis butuh</span></li><li><b>03</b><span>Kenalan dengan framework Odoo: modul, fleksibilitas, dan cara Odoo tumbuh bersama perusahaan</span></li><li><b>04</b><span>Tanya jawab live</span></li><li><b>05</b><span>Penutup</span></li></ol>' },
+    info: { kicker: 'Info acara', title: 'I-Talk bersama Handi', body: function () { return '' +
+      '<p class="itk-big">Apa itu ERP, dan kenalan dengan framework Odoo.</p>' +
+      '<p>' + esc(D.dateLong) + ', ' + esc(D.timeLabel) + '. Live di ' + esc(ITK.platform) + '.</p>' + cdHTML() +
+      '<div class="itk-actions"><button class="itk-btn itk-btn--ink" type="button" data-ics>Tambah ke kalender</button><a class="itk-btn itk-btn--line" href="' + esc(gcal) + '" target="_blank" rel="noopener">Google Calendar</a><a class="itk-btn itk-btn--primary" href="' + esc(ITK.streamUrl) + '" target="_blank" rel="noopener">Tonton live</a></div>'; } },
+    done: { kicker: 'Setup selesai', title: 'Studiomu sudah siap', body: function () {
+      var rows = BUILD.map(function (b) { return '<div><span>' + b.label + '</span><strong>' + esc(optName(b.key)) + '</strong></div>'; }).join('');
+      var extra = 'Studio versiku: ' + BUILD.map(function (b) { return b.label + ' ' + optName(b.key); }).join(', ') + '.';
+      return '<p>Seperti ERP, studio yang enak dipakai dirakit dari modul yang saling cocok. Sekarang tinggal satu yang kurang: kamu di kursi pendengar.</p>' +
+        '<div class="itk-summary">' + rows + '</div>' +
+        '<div class="itk-actions"><button class="itk-btn itk-btn--ink" type="button" data-ics>Tambah ke kalender</button><a class="itk-btn itk-btn--line" href="' + esc(waLink(extra)) + '" target="_blank" rel="noopener">Pamerkan via WhatsApp</a><a class="itk-btn itk-btn--primary" href="' + esc(ITK.streamUrl) + '" target="_blank" rel="noopener">Tonton live ' + arrow + '</a></div>'; } }
+  };
+
+  var panel = $('[data-panel]'), scrim = $('[data-scrim]');
+  var current = null, lastFocus = null;
+  function showPanel(id, tour) {
+    var c = CONTENT[id];
+    $('[data-panel-head]').innerHTML = '<span class="itk-kicker">' + c.kicker + '</span><h3 id="itk-panel-title">' + c.title + '</h3>';
+    $('[data-panel-body]').innerHTML = typeof c.body === 'function' ? c.body() : c.body;
+    var av = $('[data-avatar]', panel);
+    if (av) { var img = new Image(); img.alt = ''; img.onerror = function () { av.innerHTML = silhouette; }; img.src = 'assets/speaker.png'; av.appendChild(img); }
+    var t = $('[data-tour]'); t.hidden = !tour;
+    if (tour) { var i = HS.findIndex(function (h) { return h.id === id; }); $('[data-tour-count]').textContent = (i + 1) + ' / ' + HS.length; }
+    tick();
+    lastFocus = lastFocus || document.activeElement;
+    panel.classList.add('itk-open'); scrim.classList.add('itk-open');
+    setTimeout(function () { $('.itk-close', panel).focus({ preventScroll: true }); }, 50);
+    current = id;
+  }
+  function hidePanel(back) {
+    if (!panel.classList.contains('itk-open')) return;
+    panel.classList.remove('itk-open'); scrim.classList.remove('itk-open');
+    var wasSpot = HS.some(function (h) { return h.id === current; });
+    current = null;
+    if (back !== false && mode === 'explore' && wasSpot) flyTo('overview', 1100);
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });
+    lastFocus = null;
+  }
+  function openSpot(id) { lastFocus = document.activeElement; flyTo(id); showPanel(id, true); setMode('explore', true); }
+  function tourStep(d) { var i = HS.findIndex(function (h) { return h.id === current; }); var n = HS[(i + d + HS.length) % HS.length]; flyTo(n.id, 1100); showPanel(n.id, true); }
+  $('[data-tour-prev]').addEventListener('click', function () { tourStep(-1); });
+  $('[data-tour-next]').addEventListener('click', function () { tourStep(1); });
+  $('[data-close]').addEventListener('click', function () { hidePanel(); });
+  scrim.addEventListener('click', function () { hidePanel(); });
+  panel.addEventListener('click', function (e) { if (e.target.closest('[data-ics]')) downloadIcs(); });
+  var sy = null;
+  panel.addEventListener('touchstart', function (e) { sy = panel.scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
+  panel.addEventListener('touchend', function (e) { if (sy !== null && e.changedTouches[0].clientY - sy > 90) hidePanel(); sy = null; });
+
+  /* ---------- builder ---------- */
+  var step = 0, dock = $('[data-dock]');
+  var STEP_VIEW = ['mic', 'listen', 'chairs', 'mood'];
+  function renderSteps() {
+    $('[data-steps]').innerHTML = BUILD.map(function (b, i) {
+      return '<button type="button" role="listitem" class="itk-step' + (i < step ? ' itk-done' : '') + '"' + (i === step ? ' aria-current="step"' : '') + ' data-step="' + i + '"><b>' + (i + 1) + '</b>' + b.label + '</button>';
+    }).join('');
+    var b = BUILD[step];
+    $('[data-step-title]').textContent = b.label;
+    $('[data-step-count]').textContent = b.hint;
+    $('[data-options]').innerHTML = b.options.map(function (o) {
+      return '<button type="button" role="radio" class="itk-opt" aria-checked="' + (sel[b.key] === o.id) + '" data-opt="' + o.id + '">' +
+        '<span class="itk-swatch" style="background:linear-gradient(135deg,' + o.sw[0] + ' 0 55%,' + o.sw[1] + ' 55%)"></span>' +
+        '<strong>' + o.name + '</strong><small>' + o.desc + '</small></button>';
+    }).join('');
+    $('[data-step-prev]').style.visibility = step === 0 ? 'hidden' : 'visible';
+    $('[data-step-next]').innerHTML = step === BUILD.length - 1 ? 'Selesai ' + arrow : 'Lanjut ' + arrow;
+  }
+  function goStep(i) { step = Math.max(0, Math.min(BUILD.length - 1, i)); renderSteps(); flyTo(STEP_VIEW[step], 1100); }
+  function choose(key, id) {
+    if (sel[key] === id) return;
+    sel[key] = id; saveSel();
+    if (key === 'mic') pop(placeMics(id));
+    if (key === 'head') pop(placeHead(id));
+    if (key === 'chair') { pop(placeChairs(id)); placeMics(sel.mic); }
+    if (key === 'light') moodTo = MOODS[id];
+    renderSteps();
+  }
+  $('[data-steps]').addEventListener('click', function (e) { var b = e.target.closest('[data-step]'); if (b) goStep(+b.getAttribute('data-step')); });
+  $('[data-options]').addEventListener('click', function (e) { var b = e.target.closest('[data-opt]'); if (b) choose(BUILD[step].key, b.getAttribute('data-opt')); });
+  $('[data-options]').addEventListener('keydown', function (e) {
+    if (['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].indexOf(e.key) < 0) return;
+    e.preventDefault();
+    var o = BUILD[step].options, i = o.findIndex(function (x) { return x.id === sel[BUILD[step].key]; });
+    var n = o[(i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1) + o.length) % o.length];
+    choose(BUILD[step].key, n.id); $('[data-opt="' + n.id + '"]').focus();
+  });
+  $('[data-step-prev]').addEventListener('click', function () { goStep(step - 1); });
+  $('[data-step-next]').addEventListener('click', function () {
+    if (step < BUILD.length - 1) goStep(step + 1);
+    else { flyTo('overview', 1400); showPanel('done', false); }
+  });
+
+  /* ---------- modes ---------- */
+  var mode = 'intro', intro = $('[data-intro]'), hint = $('[data-hint]'), idleT = 0;
+  function setMode(m, silent) {
+    if (m === 'info') { showPanel('info', false); return; }
+    var changed = mode !== m;
+    mode = m;
+    intro.classList.add('itk-gone');
+    $$('[data-mode]').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m); });
+    dock.classList.toggle('itk-open', m === 'build');
+    if (m === 'build') { hidePanel(false); if (changed) goStep(0); }
+    if (m === 'explore' && changed && !silent) { hidePanel(false); flyTo('overview', 1200); hint.classList.remove('itk-gone'); setTimeout(function () { hint.classList.add('itk-gone'); }, 5000); }
+  }
+  $$('[data-go]').forEach(function (b) { b.addEventListener('click', function () { setMode(b.getAttribute('data-go')); }); });
+  $$('[data-mode]').forEach(function (b) { b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); }); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { if (panel.classList.contains('itk-open')) hidePanel(); else if (mode === 'build') setMode('explore'); }
+  });
+
+  /* click on 3D objects (not drags) */
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), downAt = null;
+  canvas.addEventListener('pointerdown', function (e) { downAt = [e.clientX, e.clientY]; idleT = 0; });
+  canvas.addEventListener('pointerup', function (e) {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6 || mode === 'build') return;
+    var r = canvas.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var targets = [
+      { id: 'mic', objs: slots.mic.concat([arms]) }, { id: 'listen', objs: [slots.head] }, { id: 'speaker', objs: [slots.chair[1]] },
+      { id: 'clock', objs: [clock] }, { id: 'agenda', objs: [monitor] }
+    ];
+    var best = null;
+    targets.forEach(function (t) { var hit = ray.intersectObjects(t.objs, true)[0]; if (hit && (!best || hit.distance < best.d)) best = { id: t.id, d: hit.distance }; });
+    if (best) openSpot(best.id);
+  });
+  controls.addEventListener('start', function () { idleT = 0; });
+
+  /* ---------- resize + loop ---------- */
+  function resize() {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h;
+    camera.fov = camera.aspect < 0.85 ? 50 : 40; camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', function () { resize(); if (!fly && mode !== 'build' && !current) flyTo('overview', 600); });
+  resize();
+  var ov = V.overview(); camera.position.set(ov.p[0] + 3, ov.p[1] + 1.5, ov.p[2] + 3); controls.target.fromArray(ov.t); controls.update();
+
+  var viewOff = { x: 0, y: 0 };
+  var last = performance.now(), monT = 0, running = true, frames = 0, qual = { n: -20, sum: 0 };
+  window.__itkFps = function () { var f = frames, t = performance.now(); return new Promise(function (r) { setTimeout(function () { r((frames - f) / ((performance.now() - t) / 1000)); }, 2000); }); };
+  document.addEventListener('visibilitychange', function () { running = !document.hidden; if (running) { last = performance.now(); requestAnimationFrame(loop); } });
+  function loop(now) {
+    if (!running) return;
+    var dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (fly) {
+      var k = Math.min(1, (now - fly.s) / fly.d), e = easeIO(k);
+      camera.position.lerpVectors(fly.p0, fly.p1, e); controls.target.lerpVectors(fly.t0, fly.t1, e);
+      if (k >= 1) { fly = null; controls.enabled = true; }
+    }
+    idleT += dt;
+    controls.autoRotate = !reduce && !fly && !current && mode !== 'build' && idleT > 4;
+    controls.update();
+    applyMood(dt);
+    // keep the focused object clear of the panel or dock by shifting the view
+    var W = canvas.clientWidth, H = canvas.clientHeight, side = W >= 900;
+    var tx = 0, ty = 0;
+    if (panel.classList.contains('itk-open')) { if (side) tx = 210; else ty = H * 0.27; }
+    else if (mode === 'build') ty = side ? H * 0.12 : H * 0.2;
+    var kk = reduce ? 1 : Math.min(1, dt * 4);
+    viewOff.x += (tx - viewOff.x) * kk; viewOff.y += (ty - viewOff.y) * kk;
+    if (Math.abs(viewOff.x) > 0.5 || Math.abs(viewOff.y) > 0.5) camera.setViewOffset(W, H, viewOff.x, viewOff.y, W, H);
+    else camera.clearViewOffset();
+    // sign blink + pop-in animation
+    if (!reduce) {
+      var b = 0.75 + 0.35 * Math.sin(now / 380);
+      signFaceMat.emissiveIntensity = b; signLight.intensity = 0.7 + b * 0.6;
+      monT += dt; if (monT > 0.12) { monT = 0; monTex.userData.draw(); }
+    }
+    root.children.forEach(function (o) {
+      if (o.userData.pop) { var t = Math.min(1, (now - o.userData.pop) / 450); o.scale.setScalar(0.6 + 0.4 * easeBack(t)); if (t >= 1) { o.userData.pop = 0; o.scale.setScalar(1); } }
+    });
+    renderer.render(scene, camera); frames++;
+    // adaptive quality: after ~60 frames, step down if the device struggles
+    if (qual.n < 0) qual.n++;
+    else if (qual.n < 60) { qual.sum += dt; qual.n++; }
+    else if (qual.n === 60) {
+      qual.n++;
+      var avg = qual.sum / 60;
+      if (avg > 1 / 40) renderer.setPixelRatio(1);
+      if (avg > 1 / 24) { key.castShadow = false; renderer.shadowMap.enabled = false; scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; }); }
+    }
+    placeHotspots(mode === 'explore' && !fly);
+    requestAnimationFrame(loop);
+  }
+
+  /* fonts first so canvas textures use them, then reveal */
+  var bar = $('[data-loader-bar]');
+  bar.style.width = '40%';
+  var fontsReady = document.fonts ? Promise.all([
+    document.fonts.load('700 40px "IBM Plex Sans"'), document.fonts.load('600 40px "IBM Plex Sans"'), document.fonts.load('600 40px "Nunito"')
+  ]).catch(function () {}) : Promise.resolve();
+  Promise.race([fontsReady, new Promise(function (r) { setTimeout(r, 2500); })]).then(function () {
+    [signTex, clockTex, monTex, standTex].forEach(function (t) { t.userData.draw(); });
+    bar.style.width = '100%';
+    renderer.compile(scene, camera);
+    requestAnimationFrame(loop);
+    flyTo('overview', 2200);
+    setTimeout(function () { $('[data-loader]').classList.add('itk-done'); }, reduce ? 0 : 350);
+  });
+})();
+</script>
+</body>
+</html>
