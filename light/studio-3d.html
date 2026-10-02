@@ -5,149 +5,161 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>I-Talk Studio 3D</title>
 <meta name="description" content="Masuk ke studio I-Talk dalam 3D. Jelajahi studio, kenali topik ERP dan Odoo, lalu rakit setup siaranmu sendiri.">
-<meta name="theme-color" content="#201d1b">
+<meta name="theme-color" content="#f3efea">
 <meta property="og:type" content="website">
 <meta property="og:title" content="I-Talk Studio 3D">
 <meta property="og:description" content="Jelajahi studio podcast Pritech dalam 3D dan rakit setup siaranmu. Kamis, 8 Oktober 2026.">
-<meta property="og:image" content="https://dindaputri-ai.github.io/claude-pritech/assets/og-share.jpg">
+<meta property="og:image" content="https://dindaputri-ai.github.io/claude-pritech/light/assets/og-share.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@200;300;400;500;600&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* Full-screen 3D studio. Canvas fills the screen, UI floats above it in four zones:
-   top bar, intro card, mode switch + builder dock (bottom), info panel (side / bottom sheet). */
+/* Full-screen 3D studio, light glass edition (matches index.html).
+   Canvas fills the screen; UI floats above it: top bar, intro card, mode switch + builder dock, info panel. */
 .itk-app {
-  --itk-accent: #f26a30;
-  --itk-deep: #d8521c;
-  --itk-ink: #201d1b;
-  --itk-ink-2: #2a2522;
+  --itk-bg: #f3efea;
   --itk-cream: #fdfbf8;
   --itk-cream-2: #f7f2ec;
-  --itk-taupe: #b5a99c;
-  --itk-taupe-d: #8a7d71;
-  --itk-glass: rgba(32,29,27,.72);
-  --itk-line: rgba(253,251,248,.14);
+  --itk-ink: #201d1b;
+  --itk-ink-2: rgba(32,29,27,.72);
+  --itk-ink-3: rgba(32,29,27,.62);
+  --itk-accent: #f26a30;
+  --itk-deep: #d8521c;
+  --itk-peach: rgba(242,106,48,.12);
+  --itk-line: rgba(32,29,27,.09);
+  --itk-glass: rgba(253,251,248,.74);
+  --itk-glass-strong: rgba(253,251,248,.88);
+  --itk-glass-brd: rgba(255,255,255,.85);
+  --itk-shadow-sm: 0 1px 2px rgba(32,29,27,.05), 0 6px 18px -8px rgba(32,29,27,.14);
+  --itk-shadow: 0 1px 2px rgba(32,29,27,.04), 0 24px 60px -24px rgba(32,29,27,.22);
   --itk-head: 'IBM Plex Sans', system-ui, sans-serif;
   --itk-body: 'Nunito', system-ui, sans-serif;
   --itk-ease: cubic-bezier(.2,.8,.2,1);
   position: fixed; inset: 0; overflow: hidden;
-  background: var(--itk-ink); color: var(--itk-cream);
-  font-family: var(--itk-body); line-height: 1.5; -webkit-font-smoothing: antialiased;
-  color-scheme: dark;
+  background: var(--itk-bg); color: var(--itk-ink);
+  font-family: var(--itk-body); line-height: 1.55; -webkit-font-smoothing: antialiased;
+  color-scheme: light;
 }
-html, body { margin: 0; height: 100%; background: #201d1b; }
+html, body { margin: 0; height: 100%; background: #f3efea; }
 .itk-app *, .itk-app *::before, .itk-app *::after { box-sizing: border-box; }
 :where(.itk-app) :where(h1, h2, h3, p) { margin: 0; }
 :where(.itk-app) button { font: inherit; color: inherit; }
 :where(.itk-app) a { color: inherit; }
 .itk-app [hidden] { display: none !important; }
-.itk-app :focus-visible { outline: 3px solid var(--itk-accent); outline-offset: 3px; }
+.itk-app :focus-visible { outline: 2px solid var(--itk-deep); outline-offset: 3px; }
 
 .itk-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .itk-canvas:active { cursor: grabbing; }
-.itk-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 55%, transparent 55%, rgba(21,19,17,.7)); }
+.itk-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(130% 95% at 50% 55%, transparent 60%, rgba(233,225,216,.55)); }
 .itk-grain {
-  position: absolute; inset: 0; pointer-events: none; opacity: .08; mix-blend-mode: overlay;
+  position: absolute; inset: 0; pointer-events: none; opacity: .05; mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* glass surfaces */
+.itk-glass, .itk-pill, .itk-intro, .itk-modes, .itk-dock, .itk-hint, .itk-hs span {
+  background: var(--itk-glass); border: 1px solid var(--itk-glass-brd); box-shadow: var(--itk-shadow-sm);
+  backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
 }
 
 /* loader */
 .itk-loader {
-  position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--itk-ink);
+  position: absolute; inset: 0; z-index: 60; display: grid; place-items: center;
+  background: radial-gradient(50% 45% at 50% 50%, rgba(242,106,48,.10), transparent 70%), var(--itk-bg);
   transition: opacity .8s var(--itk-ease), visibility .8s;
 }
 .itk-loader.itk-done { opacity: 0; visibility: hidden; }
 .itk-loader-inner { display: grid; justify-items: center; gap: 18px; text-align: center; padding: 0 24px; }
-.itk-loader-title { font-family: var(--itk-head); font-weight: 700; font-size: 44px; letter-spacing: -.03em; }
+.itk-loader-title { font-family: var(--itk-head); font-weight: 600; font-size: 48px; letter-spacing: -.04em; }
 .itk-loader-title span { color: var(--itk-accent); }
-.itk-loader-bar { width: 200px; height: 3px; border-radius: 3px; background: rgba(253,251,248,.12); overflow: hidden; }
+.itk-loader-bar { width: 200px; height: 2px; border-radius: 2px; background: var(--itk-line); overflow: hidden; }
 .itk-loader-bar i { display: block; height: 100%; width: 0; background: var(--itk-accent); transition: width .3s; }
-.itk-loader p { font-size: 14px; color: var(--itk-taupe); }
+.itk-loader p { font-size: 14px; color: var(--itk-ink-3); }
 
 /* top bar */
 .itk-top {
   position: absolute; z-index: 20; left: 0; right: 0; top: 0;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 0;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 0;
   pointer-events: none;
 }
 .itk-top > * { pointer-events: auto; }
-.itk-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--itk-head); font-weight: 700; font-size: 16px; letter-spacing: .16em; }
-.itk-logo img { height: 30px; width: auto; }
-.itk-logo-mark { width: 22px; height: 22px; border-radius: 7px; background: var(--itk-accent); display: grid; place-items: center; }
-.itk-logo-mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--itk-ink); }
+.itk-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--itk-head); font-weight: 600; font-size: 15px; letter-spacing: .2em; }
+.itk-logo img { height: 28px; width: auto; }
+.itk-logo-mark { width: 20px; height: 20px; border-radius: 6px; background: var(--itk-accent); display: grid; place-items: center; }
+.itk-logo-mark i { width: 6px; height: 6px; border-radius: 50%; background: var(--itk-cream); }
 .itk-top-right { display: flex; align-items: center; gap: 8px; }
 .itk-pill {
-  display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px;
-  background: var(--itk-glass); border: 1px solid var(--itk-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  font-family: var(--itk-head); font-weight: 700; font-size: 12px; letter-spacing: .14em; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 13px; border-radius: 999px;
+  font-family: var(--itk-head); font-weight: 500; font-size: 11px; letter-spacing: .2em; white-space: nowrap; color: var(--itk-ink);
 }
-.itk-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--itk-accent); box-shadow: 0 0 0 3px rgba(242,106,48,.25), 0 0 12px 2px rgba(242,106,48,.9); animation: itk-blink 1.4s steps(2, jump-none) infinite; }
-@keyframes itk-blink { 50% { opacity: .25; } }
-.itk-cd-mini { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
-.itk-cd-mini b { color: var(--itk-accent); font-weight: 700; }
+.itk-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--itk-accent); box-shadow: 0 0 0 3px var(--itk-peach), 0 0 10px rgba(242,106,48,.8); animation: itk-blink 1.6s steps(2, jump-none) infinite; }
+@keyframes itk-blink { 50% { opacity: .3; } }
+.itk-cd-mini { font-variant-numeric: tabular-nums; letter-spacing: .06em; color: var(--itk-ink-2); }
+.itk-cd-mini b { color: var(--itk-ink); font-weight: 600; }
 .itk-hide-sm { display: none; }
-@media (min-width: 640px) { .itk-hide-sm { display: inline-flex; } .itk-top { padding-left: 28px; padding-right: 28px; } }
+@media (min-width: 640px) { .itk-hide-sm { display: inline-flex; } .itk-top { padding-left: 32px; padding-right: 32px; } }
 
 /* intro card */
 .itk-intro {
-  position: absolute; z-index: 15; left: 16px; right: 16px; top: calc(70px + env(safe-area-inset-top, 0px));
-  max-width: 470px; padding: 22px; border-radius: 22px;
-  background: linear-gradient(160deg, rgba(32,29,27,.86), rgba(32,29,27,.64));
-  border: 1px solid var(--itk-line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  position: absolute; z-index: 15; left: 12px; right: 12px; top: calc(66px + env(safe-area-inset-top, 0px));
+  max-width: 480px; padding: 24px; border-radius: 26px; box-shadow: var(--itk-shadow);
   transition: opacity .6s var(--itk-ease), transform .6s var(--itk-ease), visibility .6s;
 }
 .itk-intro.itk-gone { opacity: 0; transform: translateY(-14px); visibility: hidden; }
-.itk-kicker { display: inline-flex; align-items: center; gap: 8px; font-family: var(--itk-head); font-weight: 600; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--itk-accent); }
-.itk-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
-.itk-eq i { width: 3px; background: currentColor; border-radius: 2px; transform-origin: bottom; animation: itk-eq 1.1s ease-in-out infinite; }
-.itk-eq i:nth-child(1) { height: 45%; animation-delay: -.2s; } .itk-eq i:nth-child(2) { height: 100%; animation-delay: -.5s; }
-.itk-eq i:nth-child(3) { height: 65%; animation-delay: -.8s; } .itk-eq i:nth-child(4) { height: 85%; animation-delay: -.35s; }
-@keyframes itk-eq { 50% { transform: scaleY(.4); } }
-.itk-title { font-family: var(--itk-head); font-weight: 700; font-size: clamp(56px, 16vw, 92px); line-height: .86; letter-spacing: -.045em; margin-top: 10px; }
+.itk-kicker {
+  display: inline-flex; align-items: center; gap: 10px; font-family: var(--itk-head); font-weight: 500; font-size: 11.5px;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--itk-ink-2);
+}
+.itk-kicker::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--itk-accent); box-shadow: 0 0 0 4px var(--itk-peach); }
+.itk-eq { display: none; }
+.itk-title { font-family: var(--itk-head); font-weight: 600; font-size: clamp(56px, 15vw, 88px); line-height: .9; letter-spacing: -.05em; margin-top: 14px; }
 .itk-title span { color: var(--itk-accent); }
-.itk-intro .itk-sub { margin-top: 12px; font-family: var(--itk-head); font-weight: 600; font-size: clamp(18px, 4.6vw, 22px); line-height: 1.2; text-wrap: balance; }
-.itk-intro .itk-meta { margin-top: 10px; font-size: 15px; color: rgba(253,251,248,.75); }
-.itk-intro .itk-meta b { color: var(--itk-cream); }
-.itk-intro-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
-.itk-intro-foot { margin-top: 14px; font-size: 13px; color: var(--itk-taupe); }
-.itk-intro-foot a { color: var(--itk-cream); font-weight: 700; }
-@media (min-width: 900px) { .itk-intro { left: 40px; top: calc(96px + env(safe-area-inset-top, 0px)); padding: 30px; } }
+.itk-intro .itk-sub { margin-top: 12px; font-family: var(--itk-head); font-weight: 200; font-size: clamp(22px, 5vw, 28px); line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
+.itk-intro .itk-sub b { font-weight: 600; }
+.itk-intro .itk-meta { margin-top: 12px; font-size: 15px; color: var(--itk-ink-2); }
+.itk-intro .itk-meta b { color: var(--itk-ink); }
+.itk-intro-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.itk-intro-foot { margin-top: 14px; font-size: 13.5px; color: var(--itk-ink-3); }
+.itk-intro-foot a { color: var(--itk-ink); font-weight: 800; }
+@media (min-width: 900px) { .itk-intro { left: 40px; top: calc(96px + env(safe-area-inset-top, 0px)); padding: 32px; } }
 @media (max-width: 639px) and (max-height: 760px) { .itk-intro .itk-meta, .itk-intro-foot { display: none; } .itk-title { font-size: 52px; } }
 
 .itk-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 48px; padding: 12px 20px; border-radius: 999px; border: 1.5px solid transparent; cursor: pointer;
+  min-height: 48px; padding: 12px 22px; border-radius: 999px; border: 1px solid transparent; cursor: pointer;
   font-weight: 800; font-size: 15px; text-decoration: none; white-space: nowrap;
-  transition: transform .25s var(--itk-ease), background-color .25s, box-shadow .25s, border-color .25s;
+  transition: transform .3s var(--itk-ease), background-color .25s, box-shadow .25s, border-color .25s;
 }
 .itk-btn svg { width: 17px; height: 17px; flex: none; }
 .itk-btn:hover { transform: translateY(-2px); }
-.itk-btn--primary { background: var(--itk-accent); color: var(--itk-ink); box-shadow: 0 10px 28px rgba(242,106,48,.35); }
-.itk-btn--ghost { background: rgba(253,251,248,.06); border-color: rgba(253,251,248,.3); color: var(--itk-cream); }
-.itk-btn--ghost:hover { border-color: var(--itk-cream); }
+.itk-btn--primary { background: var(--itk-accent); color: var(--itk-ink); box-shadow: 0 10px 28px -10px rgba(216,82,28,.6), inset 0 1px 0 rgba(255,255,255,.35); }
+.itk-btn--ghost, .itk-btn--line { background: var(--itk-glass-strong); border-color: var(--itk-line); color: var(--itk-ink); box-shadow: var(--itk-shadow-sm); }
+.itk-btn--ghost:hover, .itk-btn--line:hover { border-color: rgba(32,29,27,.22); }
 .itk-btn--ink { background: var(--itk-ink); color: var(--itk-cream); }
-.itk-btn--line { border-color: var(--itk-ink); color: var(--itk-ink); background: transparent; }
 
 /* hotspots (positioned from 3D each frame) */
 .itk-hotspots { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
 .itk-hs {
-  position: absolute; left: 0; top: 0; width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0;
+  position: absolute; left: 0; top: 0; width: 46px; height: 46px; margin: -23px 0 0 -23px; padding: 0;
   border: 0; border-radius: 50%; background: transparent; cursor: pointer; pointer-events: auto;
   display: grid; place-items: center; transition: opacity .35s;
 }
 .itk-hs.itk-off { opacity: 0; pointer-events: none; }
-.itk-hs::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; border: 2px solid var(--itk-accent); animation: itk-pulse 2.2s ease-out infinite; }
-.itk-hs::after { content: ""; width: 16px; height: 16px; border-radius: 50%; background: var(--itk-accent); box-shadow: 0 0 0 4px rgba(253,251,248,.92), 0 0 20px 6px rgba(242,106,48,.8); transition: transform .2s; }
+.itk-hs::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; border: 1.5px solid var(--itk-accent); animation: itk-pulse 2.4s ease-out infinite; }
+.itk-hs::after {
+  content: ""; width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffd9c6, var(--itk-accent) 55%, var(--itk-deep));
+  box-shadow: 0 0 0 4px rgba(253,251,248,.95), 0 6px 16px rgba(216,82,28,.45); transition: transform .2s;
+}
 .itk-hs:hover::after, .itk-hs:focus-visible::after { transform: scale(1.25); }
 @keyframes itk-pulse { from { transform: scale(.6); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
 .itk-hs span {
   position: absolute; left: 50%; top: calc(100% - 2px); transform: translateX(-50%);
-  padding: 5px 11px; border-radius: 999px; background: rgba(32,29,27,.85); border: 1px solid var(--itk-line);
-  font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none;
+  padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 800; white-space: nowrap; pointer-events: none; color: var(--itk-ink);
 }
-@media (max-width: 639px) { .itk-hs span { display: none; } }
+@media (max-width: 639px) { .itk-hs span { display: none; } .itk-hs { width: 36px; height: 36px; margin: -18px 0 0 -18px; } .itk-hs::before { inset: 6px; } .itk-hs::after { width: 12px; height: 12px; } }
 
 /* bottom: mode switch + hint */
 .itk-bottom {
@@ -157,108 +169,115 @@ html, body { margin: 0; height: 100%; background: #201d1b; }
   pointer-events: none;
 }
 .itk-bottom > * { pointer-events: auto; }
-.itk-hint { font-size: 13px; color: rgba(253,251,248,.8); background: rgba(32,29,27,.6); padding: 6px 14px; border-radius: 999px; transition: opacity .5s; text-align: center; }
+.itk-hint { font-size: 13px; color: var(--itk-ink-2); padding: 7px 15px; border-radius: 999px; transition: opacity .5s; text-align: center; }
 .itk-hint.itk-gone { opacity: 0; }
-.itk-modes { display: inline-flex; padding: 5px; gap: 4px; border-radius: 999px; background: var(--itk-glass); border: 1px solid var(--itk-line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.itk-modes { display: inline-flex; padding: 5px; gap: 4px; border-radius: 999px; box-shadow: var(--itk-shadow); }
 .itk-modes button {
   min-height: 42px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; cursor: pointer;
-  font-weight: 800; font-size: 14px; color: rgba(253,251,248,.75); transition: background-color .25s, color .25s;
+  font-weight: 800; font-size: 14px; color: var(--itk-ink-2); transition: background-color .25s, color .25s;
 }
-.itk-modes button[aria-pressed="true"] { background: var(--itk-cream); color: var(--itk-ink); }
-.itk-modes .itk-info-btn { color: var(--itk-accent); }
+.itk-modes button:hover { color: var(--itk-ink); }
+.itk-modes button[aria-pressed="true"] { background: var(--itk-ink); color: var(--itk-cream); }
+.itk-modes .itk-info-btn { color: var(--itk-ink); }
+.itk-modes .itk-info-btn::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--itk-accent); vertical-align: middle; }
 
 /* builder dock */
 .itk-dock {
-  width: min(100%, 860px); min-width: 0; padding: 14px; border-radius: 22px;
-  background: rgba(32,29,27,.86); border: 1px solid var(--itk-line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  width: min(100%, 880px); min-width: 0; padding: 16px; border-radius: 26px; box-shadow: var(--itk-shadow);
+  background: var(--itk-glass-strong);
   transform: translateY(16px); opacity: 0; visibility: hidden; transition: transform .5s var(--itk-ease), opacity .5s, visibility .5s;
 }
 .itk-dock.itk-open { transform: none; opacity: 1; visibility: visible; }
 .itk-steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .itk-steps::-webkit-scrollbar { display: none; }
 .itk-step {
-  flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px; border-radius: 999px; border: 1px solid transparent;
-  background: transparent; cursor: pointer; font-weight: 800; font-size: 13px; color: rgba(253,251,248,.6);
+  flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 6px 13px 6px 7px; border-radius: 999px; border: 1px solid transparent;
+  background: transparent; cursor: pointer; font-weight: 800; font-size: 13px; color: var(--itk-ink-3);
 }
-.itk-step b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(253,251,248,.1); font-family: var(--itk-head); font-size: 12px; }
-.itk-step[aria-current="step"] { color: var(--itk-cream); border-color: var(--itk-line); background: rgba(253,251,248,.06); }
+.itk-step b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(32,29,27,.06); font-family: var(--itk-head); font-weight: 500; font-size: 12px; }
+.itk-step[aria-current="step"] { color: var(--itk-ink); border-color: var(--itk-line); background: rgba(255,255,255,.7); }
 .itk-step[aria-current="step"] b, .itk-step.itk-done b { background: var(--itk-accent); color: var(--itk-ink); }
 .itk-step-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 12px; }
-.itk-step-head h2 { font-family: var(--itk-head); font-weight: 700; font-size: 20px; letter-spacing: -.01em; }
-.itk-step-head p { font-size: 13px; color: var(--itk-taupe); }
-.itk-options { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(210px, 1fr); min-width: 0; scroll-snap-type: x mandatory; gap: 10px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.itk-step-head h2 { font-family: var(--itk-head); font-weight: 200; font-size: 24px; letter-spacing: -.02em; }
+.itk-step-head p { font-size: 13px; color: var(--itk-ink-3); }
+.itk-options { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(210px, 1fr); gap: 10px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; padding: 2px; min-width: 0; scroll-snap-type: x mandatory; }
 .itk-options::-webkit-scrollbar { display: none; }
 .itk-opt {
   scroll-snap-align: start; text-align: left; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center;
-  padding: 12px; border-radius: 16px; border: 1.5px solid var(--itk-line); background: rgba(253,251,248,.04); cursor: pointer;
-  transition: border-color .2s, background-color .2s, transform .2s;
+  padding: 12px; border-radius: 18px; border: 1px solid var(--itk-line); background: rgba(255,255,255,.66); cursor: pointer; color: var(--itk-ink);
+  transition: border-color .2s, background-color .2s, transform .3s var(--itk-ease), box-shadow .3s;
 }
-.itk-opt:hover { border-color: rgba(253,251,248,.4); }
-.itk-opt[aria-checked="true"] { border-color: var(--itk-accent); background: rgba(242,106,48,.12); }
-.itk-swatch { grid-row: span 2; width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(253,251,248,.2); }
-.itk-opt strong { font-family: var(--itk-head); font-size: 15px; font-weight: 700; }
-.itk-opt small { font-size: 12.5px; color: rgba(253,251,248,.66); line-height: 1.35; }
+.itk-opt:hover { border-color: rgba(32,29,27,.22); transform: translateY(-2px); }
+.itk-opt[aria-checked="true"] { border-color: var(--itk-accent); background: #fff4ee; box-shadow: 0 0 0 3px var(--itk-peach); }
+.itk-swatch { grid-row: span 2; width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(32,29,27,.12); }
+.itk-opt strong { font-family: var(--itk-head); font-size: 15px; font-weight: 600; }
+.itk-opt small { font-size: 12.5px; color: var(--itk-ink-2); line-height: 1.35; }
 .itk-dock-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; }
 .itk-dock-actions .itk-btn { min-height: 42px; padding: 8px 18px; font-size: 14px; }
-.itk-linkbtn { background: none; border: 0; cursor: pointer; font-weight: 800; font-size: 14px; color: rgba(253,251,248,.7); padding: 8px 4px; }
-.itk-linkbtn:hover { color: var(--itk-cream); }
+.itk-linkbtn { background: none; border: 0; cursor: pointer; font-weight: 800; font-size: 14px; color: var(--itk-ink-2); padding: 8px 4px; }
+.itk-linkbtn:hover { color: var(--itk-ink); }
 
-/* info panel */
-.itk-scrim { position: absolute; inset: 0; z-index: 35; background: rgba(21,19,17,.35); opacity: 0; visibility: hidden; transition: opacity .4s, visibility .4s; }
+/* glass info panel */
+.itk-scrim { position: absolute; inset: 0; z-index: 35; background: rgba(243,239,234,.3); opacity: 0; visibility: hidden; transition: opacity .4s, visibility .4s; }
 .itk-scrim.itk-open { opacity: 1; visibility: visible; }
 .itk-panel {
-  position: absolute; z-index: 40; left: 0; right: 0; bottom: 0; max-height: 72%; overflow-y: auto; overscroll-behavior: contain;
-  background: var(--itk-cream); color: var(--itk-ink); border-radius: 24px 24px 0 0;
-  padding: 12px 20px calc(20px + env(safe-area-inset-bottom, 0px));
-  transform: translateY(105%); visibility: hidden; transition: transform .55s var(--itk-ease), visibility .55s;
-  box-shadow: 0 -20px 60px rgba(0,0,0,.4);
+  position: absolute; z-index: 40; left: 8px; right: 8px; bottom: 8px; max-height: 72%; overflow-y: auto; overscroll-behavior: contain;
+  background: rgba(253,251,248,.84); border: 1px solid var(--itk-glass-brd); color: var(--itk-ink); border-radius: 28px;
+  backdrop-filter: blur(28px) saturate(1.3); -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  padding: 12px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+  transform: translateY(110%); visibility: hidden; transition: transform .55s var(--itk-ease), visibility .55s;
+  box-shadow: 0 30px 80px -20px rgba(32,29,27,.3);
 }
 .itk-panel.itk-open { transform: none; visibility: visible; }
-.itk-grip { width: 42px; height: 5px; border-radius: 3px; background: var(--itk-taupe); margin: 0 auto 12px; }
+.itk-grip { width: 40px; height: 4px; border-radius: 2px; background: rgba(32,29,27,.18); margin: 0 auto 12px; }
 .itk-panel-head { position: relative; padding-right: 54px; }
 .itk-close {
-  position: absolute; right: -4px; top: -4px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
-  border: 1px solid rgba(138,125,113,.35); background: var(--itk-cream-2); display: grid; place-items: center;
+  position: absolute; right: -6px; top: -6px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--itk-line); background: var(--itk-cream); display: grid; place-items: center; transition: transform .3s var(--itk-ease);
 }
-.itk-close svg { width: 18px; height: 18px; }
-.itk-panel h3 { font-family: var(--itk-head); font-weight: 700; font-size: 26px; line-height: 1.1; margin-top: 6px; text-wrap: balance; }
-.itk-panel-body { display: grid; gap: 14px; margin-top: 14px; }
+.itk-close:hover { transform: rotate(90deg); }
+.itk-close svg { width: 16px; height: 16px; }
+.itk-panel h3 { font-family: var(--itk-head); font-weight: 200; font-size: 30px; line-height: 1.1; letter-spacing: -.025em; margin-top: 10px; text-wrap: balance; }
+.itk-panel h3 b { font-weight: 600; }
+.itk-panel-body { display: grid; gap: 14px; margin-top: 16px; }
 .itk-panel-body > * { animation: itk-rise .5s var(--itk-ease) both; }
 .itk-panel-body > *:nth-child(2) { animation-delay: .05s; } .itk-panel-body > *:nth-child(3) { animation-delay: .1s; }
 .itk-panel-body > *:nth-child(4) { animation-delay: .15s; } .itk-panel-body > *:nth-child(5) { animation-delay: .2s; }
 @keyframes itk-rise { from { opacity: 0; transform: translateY(10px); } }
-.itk-panel-body p { color: #4a423c; }
-.itk-big { font-family: var(--itk-head); font-weight: 600; font-size: 19px; line-height: 1.3; color: var(--itk-ink) !important; }
+.itk-panel-body p { color: var(--itk-ink-2); }
+.itk-big { font-family: var(--itk-head); font-weight: 500; font-size: 19px; line-height: 1.35; color: var(--itk-ink) !important; }
 .itk-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
-.itk-list li { display: grid; grid-template-columns: 30px 1fr; gap: 8px; }
-.itk-list b { font-family: var(--itk-head); color: var(--itk-deep); }
-.itk-list--dots li::before { content: ""; width: 8px; height: 8px; margin: 8px 0 0 6px; border-radius: 50%; background: var(--itk-accent); }
+.itk-list li { display: grid; grid-template-columns: 32px 1fr; gap: 8px; }
+.itk-list b { font-family: var(--itk-head); font-weight: 400; color: var(--itk-ink-3); font-variant-numeric: tabular-nums; }
+.itk-list--dots li::before { content: ""; width: 7px; height: 7px; margin: 9px 0 0 8px; border-radius: 50%; background: var(--itk-accent); }
 .itk-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.itk-actions .itk-btn { min-height: 46px; padding: 10px 20px; font-size: 14.5px; }
 .itk-cd { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.itk-cd div { text-align: center; padding: 10px 4px; border-radius: 14px; background: var(--itk-cream-2); border: 1px solid rgba(138,125,113,.3); }
-.itk-cd strong { display: block; font-family: var(--itk-head); font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
-.itk-cd small { display: block; margin-top: 4px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--itk-taupe-d); }
+.itk-cd div { text-align: center; padding: 12px 4px 10px; border-radius: 16px; background: rgba(255,255,255,.7); border: 1px solid var(--itk-line); }
+.itk-cd strong { display: block; font-family: var(--itk-head); font-weight: 200; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.itk-cd small { display: block; margin-top: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--itk-ink-3); }
 .itk-person { display: flex; align-items: center; gap: 14px; }
-.itk-avatar { width: 84px; height: 84px; flex: none; border-radius: 50%; overflow: hidden; background: linear-gradient(160deg, var(--itk-accent), var(--itk-deep)); box-shadow: 0 0 0 4px var(--itk-cream), 0 0 0 6px var(--itk-accent), 0 0 24px rgba(242,106,48,.5); }
+.itk-avatar { width: 84px; height: 84px; flex: none; border-radius: 50%; overflow: hidden; background: var(--itk-cream-2); box-shadow: 0 0 0 3px var(--itk-cream), 0 0 0 4.5px var(--itk-accent), 0 10px 24px -8px rgba(216,82,28,.5); }
 .itk-avatar img, .itk-avatar svg { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-.itk-person strong { display: block; font-family: var(--itk-head); font-size: 24px; }
+.itk-person strong { display: block; font-family: var(--itk-head); font-weight: 600; font-size: 24px; }
 .itk-summary { display: grid; gap: 8px; }
-.itk-summary div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 12px; background: var(--itk-cream-2); }
-.itk-summary span { color: var(--itk-taupe-d); font-weight: 700; font-size: 14px; }
-.itk-summary strong { font-family: var(--itk-head); font-size: 15px; text-align: right; }
-.itk-tour { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(138,125,113,.3); }
-.itk-tour button { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(138,125,113,.4); background: transparent; cursor: pointer; font-weight: 800; font-size: 14px; }
-.itk-tour span { font-family: var(--itk-head); font-weight: 600; font-size: 13px; color: var(--itk-taupe-d); font-variant-numeric: tabular-nums; }
+.itk-summary div { display: flex; justify-content: space-between; gap: 12px; padding: 11px 14px; border-radius: 14px; background: rgba(255,255,255,.7); border: 1px solid var(--itk-line); }
+.itk-summary span { color: var(--itk-ink-3); font-weight: 700; font-size: 14px; }
+.itk-summary strong { font-family: var(--itk-head); font-weight: 600; font-size: 15px; text-align: right; }
+.itk-tour { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--itk-line); }
+.itk-tour button { min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1px solid var(--itk-line); background: rgba(255,255,255,.7); cursor: pointer; font-weight: 800; font-size: 14px; }
+.itk-tour span { font-family: var(--itk-head); font-weight: 500; font-size: 13px; color: var(--itk-ink-3); font-variant-numeric: tabular-nums; }
 @media (min-width: 900px) {
-  .itk-panel { left: auto; top: 16px; right: 16px; bottom: 16px; width: 420px; max-height: none; border-radius: 26px; padding: 28px; transform: translateX(110%); }
+  .itk-panel { left: auto; top: 12px; right: 12px; bottom: 12px; width: 430px; max-height: none; padding: 32px 30px; transform: translateX(115%); }
   .itk-grip { display: none; }
   .itk-scrim { background: transparent; }
 }
 
 /* fallback */
-.itk-fallback { position: absolute; inset: 0; z-index: 70; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--itk-ink); }
+.itk-fallback { position: absolute; inset: 0; z-index: 70; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--itk-bg); }
 .itk-fallback div { max-width: 420px; display: grid; gap: 14px; justify-items: center; }
-.itk-fallback h2 { font-family: var(--itk-head); font-size: 28px; }
+.itk-fallback h2 { font-family: var(--itk-head); font-weight: 200; font-size: 30px; letter-spacing: -.02em; }
+.itk-fallback p { color: var(--itk-ink-2); }
 
 .itk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -296,7 +315,7 @@ html, body { margin: 0; height: 100%; background: #201d1b; }
   <section class="itk-intro" data-intro aria-labelledby="itk-title">
     <span class="itk-kicker"><span class="itk-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Podcast radio Pritech</span>
     <h1 class="itk-title" id="itk-title">I<span>-</span>Talk</h1>
-    <p class="itk-sub">Apa itu ERP, dan kenalan dengan framework Odoo.</p>
+    <p class="itk-sub">apa itu ERP, dan kenalan dengan <b>framework Odoo</b></p>
     <p class="itk-meta">Bareng <b>Handi</b>, Direktur PT Pritech Indonesia. <b data-bind="dateLong"></b>, <span data-bind="timeLabel"></span>, live di <span data-bind="platform"></span>.</p>
     <div class="itk-intro-actions">
       <button class="itk-btn itk-btn--primary" type="button" data-go="explore">Masuk ke studio
@@ -383,12 +402,12 @@ var BUILD = [
     { id: 'cream', name: 'Cream', desc: 'Tampil bersih di kamera.', sw: ['#f7f2ec', '#201d1b'] },
     { id: 'oranye', name: 'Oranye', desc: 'Warna khas Pritech.', sw: ['#f26a30', '#201d1b'] } ] },
   { key: 'chair', label: 'Kursi', hint: 'Untuk host dan tamu', options: [
-    { id: 'lounge', name: 'Lounge', desc: 'Empuk, enak buat ngobrol panjang.', sw: ['#b5a99c', '#201d1b'] },
-    { id: 'kerja', name: 'Kursi kerja', desc: 'Tegak dan fokus, seperti rapat.', sw: ['#201d1b', '#f26a30'] },
-    { id: 'stool', name: 'Stool bar', desc: 'Santai, gaya studio kreatif.', sw: ['#8a7d71', '#f7f2ec'] } ] },
+    { id: 'lounge', name: 'Lounge', desc: 'Empuk, enak buat ngobrol panjang.', sw: ['#fbf9f6', '#f26a30'] },
+    { id: 'kerja', name: 'Kursi kerja', desc: 'Tegak dan fokus, seperti rapat.', sw: ['#fbf9f6', '#d9d4ce'] },
+    { id: 'stool', name: 'Stool bar', desc: 'Santai, gaya studio kreatif.', sw: ['#e6d9c8', '#f7f2ec'] } ] },
   { key: 'light', label: 'Lampu', hint: 'Suasana studio saat siaran', options: [
     { id: 'hangat', name: 'Hangat', desc: 'Cahaya oranye lembut, suasana sore.', sw: ['#f26a30', '#fdfbf8'] },
-    { id: 'malam', name: 'Siaran malam', desc: 'Redup dengan aksen oranye tajam.', sw: ['#201d1b', '#d8521c'] },
+    { id: 'malam', name: 'Siaran malam', desc: 'Redup dengan aksen oranye tajam.', sw: ['#e8ddd2', '#d8521c'] },
     { id: 'terang', name: 'Studio terang', desc: 'Terang dan bersih untuk rekaman video.', sw: ['#fdfbf8', '#b5a99c'] } ] }
 ];
 
@@ -482,8 +501,9 @@ var BUILD = [
 
   var C = { ink: 0x201d1b, ink2: 0x2a2522, ink3: 0x3a3430, taupe: 0xb5a99c, taupeD: 0x8a7d71, cream: 0xfdfbf8, cream2: 0xf7f2ec, accent: 0xf26a30, deep: 0xd8521c };
   var scene = new THREE.Scene();
-  scene.background = new THREE.Color(C.ink);
-  scene.fog = new THREE.Fog(C.ink, 13, 30);
+  scene.background = new THREE.Color(0xf3efea);
+  scene.fog = new THREE.Fog(0xf3efea, 16, 34);
+  renderer.setClearColor(0xf3efea, 1);
   var pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
 
@@ -536,7 +556,7 @@ var BUILD = [
   /* ---------- shared materials ---------- */
   var mat = {
     ink: M(C.ink, .55, .1), ink2: M(C.ink2, .8), ink3: M(C.ink3, .7),
-    metal: M(C.ink, .3, .8), steel: M(C.taupe, .25, .9),
+    metal: M(0xe8e4df, .24, 1, { envMapIntensity: 1.15 }), steel: M(0xd9d4ce, .3, 1, { envMapIntensity: 1.1 }), white: M(0xfbf9f6, .55),
     taupe: M(C.taupe, .6), taupeD: M(C.taupeD, .7), cream: M(C.cream2, .55), wood: M(C.taupe, .45, 0),
     led: M(C.accent, .4, 0, { emissive: C.accent, emissiveIntensity: 1.6 }),
     glowCream: M(C.cream, .4, 0, { emissive: C.cream, emissiveIntensity: 1.2 })
@@ -544,14 +564,14 @@ var BUILD = [
 
   /* ---------- room ---------- */
   var root = new THREE.Group(); scene.add(root);
-  var ground = mesh(new THREE.CircleGeometry(40, 64), M(0x1a1715, .95)); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.18; ground.castShadow = false; root.add(ground);
-  var platform = mesh(new THREE.CylinderGeometry(4.3, 4.4, 0.18, 96), mat.ink2, 0, -0.09, 0); root.add(platform);
+  var ground = mesh(new THREE.CircleGeometry(40, 64), M(0xeee8e1, .95)); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.18; ground.castShadow = false; root.add(ground);
+  var platform = mesh(new THREE.CylinderGeometry(4.3, 4.4, 0.18, 96), M(0xfbf9f6, .55), 0, -0.09, 0); root.add(platform);
   var ring = new THREE.Mesh(new THREE.TorusGeometry(4.33, 0.022, 8, 160), mat.led); ring.rotation.x = Math.PI / 2; root.add(ring);
-  var rug = mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.012, 80), M(C.ink3, .95), 0, 0.006, 0.1); root.add(rug);
+  var rug = mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.012, 80), M(0xe7ddd1, .95), 0, 0.006, 0.1); root.add(rug);
   var rugEdge = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.01, 6, 120), mat.taupeD); rugEdge.rotation.x = Math.PI / 2; rugEdge.position.y = 0.013; rugEdge.position.z = 0.1; root.add(rugEdge);
 
   var WALL_R = 4, ARC = 1.3;
-  var wall = new THREE.Mesh(new THREE.CylinderGeometry(WALL_R, WALL_R, 3.4, 96, 1, true, Math.PI - ARC, ARC * 2), M(C.ink2, .9, 0, { side: THREE.DoubleSide }));
+  var wall = new THREE.Mesh(new THREE.CylinderGeometry(WALL_R, WALL_R, 3.4, 96, 1, true, Math.PI - ARC, ARC * 2), M(0xf7f2ec, .9, 0, { side: THREE.DoubleSide }));
   wall.position.y = 1.7; wall.receiveShadow = true; root.add(wall);
   function arcCurve(r, y, a0, a1) {
     var pts = []; for (var i = 0; i <= 48; i++) { var a = a0 + (a1 - a0) * i / 48; pts.push(new THREE.Vector3(r * Math.sin(a), y, r * Math.cos(a))); }
@@ -566,23 +586,23 @@ var BUILD = [
   }
   // acoustic foam panels
   var foamTex = canvasTex(256, 256, function (ctx, w, h) {
-    ctx.fillStyle = '#8a7d71'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#e6dbcf'; ctx.fillRect(0, 0, w, h);
     for (var x = 0; x < w; x += 32) {
       var g = ctx.createLinearGradient(x, 0, x + 32, 0);
-      g.addColorStop(0, '#5e554d'); g.addColorStop(.45, '#b5a99c'); g.addColorStop(1, '#5e554d');
+      g.addColorStop(0, '#cfc2b4'); g.addColorStop(.45, '#f7f2ec'); g.addColorStop(1, '#cfc2b4');
       ctx.fillStyle = g; ctx.fillRect(x, 0, 32, h);
     }
   });
   var foamTexR = foamTex.clone(); foamTexR.center.set(.5, .5); foamTexR.rotation = Math.PI / 2; foamTexR.needsUpdate = true;
   [-1, 1].forEach(function (side) {
     for (var c = 0; c < 3; c++) for (var r = 0; r < 3; r++) {
-      var p = mesh(new THREE.BoxGeometry(0.5, 0.5, 0.07), [mat.taupeD, mat.taupeD, mat.taupeD, mat.taupeD, M(C.cream, .95, 0, { map: (c + r) % 2 ? foamTexR : foamTex }), mat.taupeD]);
+      var p = mesh(new THREE.BoxGeometry(0.5, 0.5, 0.07), [mat.white, mat.white, mat.white, mat.white, M(C.cream, .95, 0, { map: (c + r) % 2 ? foamTexR : foamTex }), mat.white]);
       onWall(p, Math.PI + side * (0.62 + c * 0.14), 1.05 + r * 0.56, 0.06);
     }
   });
   // ON AIR sign
   var signTex = canvasTex(1024, 360, function (ctx, w, h) {
-    ctx.fillStyle = '#201d1b'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#fdfbf8'; ctx.fillRect(0, 0, w, h);
     var g = ctx.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w / 1.6);
     g.addColorStop(0, '#ff9a68'); g.addColorStop(.55, '#f26a30'); g.addColorStop(1, '#d8521c');
     roundRect(ctx, 24, 24, w - 48, h - 48, 60); ctx.fillStyle = g; ctx.fill();
@@ -591,7 +611,7 @@ var BUILD = [
   });
   var signFaceMat = M(C.cream, .35, 0, { map: signTex, emissive: C.cream, emissiveMap: signTex, emissiveIntensity: 1 });
   var sign = new THREE.Group();
-  sign.add(mesh(new THREE.BoxGeometry(1.5, 0.56, 0.12), mat.ink));
+  sign.add(mesh(new THREE.BoxGeometry(1.5, 0.56, 0.12), mat.white));
   var signFace = new THREE.Mesh(new THREE.PlaneGeometry(1.42, 0.5), signFaceMat); signFace.position.z = 0.061; sign.add(signFace);
   onWall(sign, Math.PI, 2.62, 0.1);
   var signLight = new THREE.PointLight(C.accent, 1.2, 4.5, 2); signLight.position.set(0, 2.5, -WALL_R + 0.6); root.add(signLight);
@@ -599,8 +619,8 @@ var BUILD = [
   var clockTex = canvasTex(512, 512, function (ctx, w) {
     var c = w / 2, now = new Date();
     ctx.clearRect(0, 0, w, w);
-    ctx.fillStyle = '#201d1b'; ctx.beginPath(); ctx.arc(c, c, c, 0, 7); ctx.fill();
-    ctx.fillStyle = '#f7f2ec'; ctx.beginPath(); ctx.arc(c, c, c - 26, 0, 7); ctx.fill();
+    ctx.fillStyle = '#d9d4ce'; ctx.beginPath(); ctx.arc(c, c, c, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fdfbf8'; ctx.beginPath(); ctx.arc(c, c, c - 26, 0, 7); ctx.fill();
     for (var i = 0; i < 60; i++) {
       var a = i * Math.PI / 30, r1 = c - 44, r2 = c - (i % 5 ? 52 : 70);
       ctx.strokeStyle = i % 5 ? '#b5a99c' : '#201d1b'; ctx.lineWidth = i % 5 ? 3 : 9; ctx.lineCap = 'round';
@@ -613,7 +633,7 @@ var BUILD = [
     ctx.fillStyle = '#f26a30'; ctx.beginPath(); ctx.arc(c, c, 12, 0, 7); ctx.fill();
   });
   var clock = new THREE.Group();
-  var clockBody = mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.07, 48), mat.ink); clockBody.rotation.x = Math.PI / 2; clock.add(clockBody);
+  var clockBody = mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.07, 48), mat.metal); clockBody.rotation.x = Math.PI / 2; clock.add(clockBody);
   var clockFace = new THREE.Mesh(new THREE.CircleGeometry(0.33, 48), M(C.cream, .5, 0, { map: clockTex, emissive: C.cream, emissiveMap: clockTex, emissiveIntensity: .25 })); clockFace.position.z = 0.036; clock.add(clockFace);
   onWall(clock, Math.PI + 0.33, 2.55, 0.06);
   setInterval(function () { clockTex.userData.draw(); }, 1000);
@@ -622,8 +642,8 @@ var BUILD = [
   var lampLights = [];
   [-0.92, 0.92].forEach(function (x) {
     var g = new THREE.Group();
-    g.add(mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.8, 6), mat.ink, 0, 0.9, 0));
-    var shade = mesh(new THREE.CylinderGeometry(0.05, 0.22, 0.2, 40, 1, true), M(C.ink, .45, .3, { side: THREE.DoubleSide })); g.add(shade);
+    g.add(mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.8, 6), mat.metal, 0, 0.9, 0));
+    var shade = mesh(new THREE.CylinderGeometry(0.05, 0.22, 0.2, 40, 1, true), M(0xfbf9f6, .4, 0, { side: THREE.DoubleSide })); g.add(shade);
     var inner = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), mat.glowCream); inner.rotation.x = Math.PI / 2; inner.position.y = -0.09; g.add(inner);
     var l = new THREE.PointLight(C.cream, 0.7, 4, 2); l.position.y = -0.25; g.add(l); lampLights.push(l);
     g.position.set(x, 2.3, 0.05); root.add(g);
@@ -632,18 +652,18 @@ var BUILD = [
   /* ---------- desk + monitor ---------- */
   var desk = new THREE.Group(); root.add(desk);
   var top = slab(2.7, 1.1, 0.5, 0.05, mat.wood, 0.015); top.position.y = 0.73; desk.add(top);
-  var body = slab(2.2, 0.72, 0.34, 0.7, mat.ink2); body.position.y = 0.02; desk.add(body);
+  var body = slab(2.2, 0.72, 0.34, 0.7, M(0xe6d9c8, .6)); body.position.y = 0.02; desk.add(body);
   desk.add(mesh(new THREE.BoxGeometry(1.7, 0.022, 0.01), mat.led, 0, 0.6, 0.362));
   desk.add(mesh(new THREE.BoxGeometry(1.7, 0.022, 0.01), mat.led, 0, 0.6, -0.362));
   var monTex = canvasTex(1024, 600, function (ctx, w, h) {
     var t = performance.now() / 1000;
-    ctx.fillStyle = '#201d1b'; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#f26a30'; ctx.font = '700 34px "IBM Plex Sans", sans-serif'; ctx.fillText('SUSUNAN ACARA', 56, 78);
+    ctx.fillStyle = '#fdfbf8'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#201d1b'; ctx.font = '600 34px "IBM Plex Sans", sans-serif'; ctx.fillText('SUSUNAN ACARA', 56, 78);
     ctx.fillStyle = '#f26a30'; ctx.beginPath(); ctx.arc(w - 70, 66, 12, 0, 7); ctx.globalAlpha = .5 + .5 * Math.abs(Math.sin(t * 2)); ctx.fill(); ctx.globalAlpha = 1;
     var items = ['Pembukaan', 'Apa itu ERP dan kenapa bisnis butuh', 'Kenalan dengan framework Odoo', 'Tanya jawab live', 'Penutup'];
     items.forEach(function (it, i) {
       ctx.fillStyle = '#d8521c'; ctx.font = '700 30px "IBM Plex Sans", sans-serif'; ctx.fillText('0' + (i + 1), 56, 150 + i * 62);
-      ctx.fillStyle = '#fdfbf8'; ctx.font = '600 32px "Nunito", sans-serif'; ctx.fillText(it, 120, 150 + i * 62);
+      ctx.fillStyle = '#201d1b'; ctx.font = '600 32px "Nunito", sans-serif'; ctx.fillText(it, 120, 150 + i * 62);
     });
     for (var i = 0; i < 64; i++) {
       var bh = 8 + Math.abs(Math.sin(i * .5 + t * 3) * Math.cos(i * .17 - t)) * 56;
@@ -652,27 +672,28 @@ var BUILD = [
     }
   });
   var monitor = new THREE.Group();
-  monitor.add(mesh(new THREE.BoxGeometry(0.86, 0.5, 0.035), mat.ink));
-  var screen = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.46), M(C.ink, .3, 0, { map: monTex, emissive: C.cream, emissiveMap: monTex, emissiveIntensity: .9 })); screen.position.z = 0.019; monitor.add(screen);
+  monitor.add(mesh(new THREE.BoxGeometry(0.86, 0.5, 0.035), mat.metal));
+  var screen = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.46), new THREE.MeshBasicMaterial({ map: monTex, toneMapped: false })); screen.position.z = 0.019; monitor.add(screen);
   monitor.add(mesh(new THREE.BoxGeometry(0.06, 0.24, 0.04), mat.metal, 0, -0.33, -0.03));
   monitor.add(mesh(new THREE.BoxGeometry(0.3, 0.015, 0.18), mat.metal, 0, -0.45, -0.03));
   monitor.position.set(0, 1.23, -0.32); monitor.rotation.x = -0.06; desk.add(monitor);
   // standee with event info
   var standTex = canvasTex(600, 1000, function (ctx, w, h) {
-    ctx.fillStyle = '#f26a30'; ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = '#d8521c'; ctx.lineWidth = 60; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-40, 180); ctx.bezierCurveTo(200, 60, 360, 40, 640, -60); ctx.stroke();
-    ctx.save(); ctx.translate(w / 2, h / 2 + 40); ctx.rotate(-.04); ctx.fillStyle = '#f7f2ec'; ctx.fillRect(-250, -330, 500, 700); ctx.restore();
-    ctx.beginPath(); ctx.moveTo(60, 250); ctx.lineTo(w - 60, 210); ctx.lineTo(w - 60, h - 90); ctx.lineTo(60, h - 90); ctx.closePath(); ctx.fillStyle = '#201d1b'; ctx.fill();
-    ctx.fillStyle = '#201d1b'; ctx.font = '700 30px "IBM Plex Sans", sans-serif'; ctx.fillText('PRITECH PODCAST', 60, 120);
-    ctx.fillStyle = '#f26a30'; ctx.font = '600 24px "IBM Plex Sans", sans-serif'; ctx.fillText('ON AIR', 100, 330);
-    ctx.fillStyle = '#fdfbf8'; ctx.font = '700 150px "IBM Plex Sans", sans-serif'; ctx.fillText('I-Talk', 92, 480);
-    ctx.font = '600 34px "Nunito", sans-serif'; ['Apa itu ERP, dan', 'kenalan dengan', 'framework Odoo.'].forEach(function (l, i) { ctx.fillText(l, 100, 560 + i * 44); });
-    ctx.fillStyle = '#f26a30'; ctx.font = '700 32px "IBM Plex Sans", sans-serif'; ctx.fillText(D.dateLong, 100, 760);
-    ctx.fillStyle = '#fdfbf8'; ctx.fillText(D.timeLabel, 100, 802);
-    ctx.fillStyle = 'rgba(253,251,248,.75)'; ctx.font = '600 28px "Nunito", sans-serif'; ctx.fillText('bersama Handi', 100, 870);
+    ctx.fillStyle = '#fdfbf8'; ctx.fillRect(0, 0, w, h);
+    var g = ctx.createRadialGradient(w * .7, h * .32, 10, w * .7, h * .32, w * .7);
+    g.addColorStop(0, 'rgba(242,106,48,.55)'); g.addColorStop(.5, 'rgba(255,180,143,.25)'); g.addColorStop(1, 'rgba(253,251,248,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#f26a30'; ctx.beginPath(); ctx.arc(66, 112, 7, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(32,29,27,.72)'; ctx.font = '500 22px "IBM Plex Sans", sans-serif'; ctx.fillText('P R I T E C H   P O D C A S T', 86, 120);
+    ctx.fillStyle = '#201d1b'; ctx.font = '600 150px "IBM Plex Sans", sans-serif'; ctx.fillText('I-Talk', 52, 400);
+    ctx.font = '200 44px "IBM Plex Sans", sans-serif'; ['ngobrol soal ERP', 'dan framework', 'Odoo'].forEach(function (l, i) { ctx.fillText(l, 56, 500 + i * 54); });
+    ctx.fillStyle = 'rgba(32,29,27,.09)'; ctx.fillRect(56, 700, w - 112, 2);
+    ctx.fillStyle = '#201d1b'; ctx.font = '600 32px "IBM Plex Sans", sans-serif'; ctx.fillText(D.dateLong, 56, 770);
+    ctx.font = '300 32px "IBM Plex Sans", sans-serif'; ctx.fillText(D.timeLabel, 56, 815);
+    ctx.fillStyle = 'rgba(32,29,27,.72)'; ctx.font = '600 28px "Nunito", sans-serif'; ctx.fillText('bersama Handi', 56, 890);
   });
   var standee = new THREE.Group();
-  standee.add(mesh(new THREE.BoxGeometry(0.92, 1.52, 0.03), mat.ink, 0, 1.06, 0));
+  standee.add(mesh(new THREE.BoxGeometry(0.92, 1.52, 0.03), mat.white, 0, 1.06, 0));
   var poster = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 1.47), M(C.cream, .6, 0, { map: standTex, emissive: C.cream, emissiveMap: standTex, emissiveIntensity: .18 })); poster.position.set(0, 1.06, 0.017); standee.add(poster);
   standee.add(between(new THREE.Vector3(-0.3, 0, -0.25), new THREE.Vector3(-0.3, 0.4, 0), 0.012, mat.metal));
   standee.add(between(new THREE.Vector3(0.3, 0, -0.25), new THREE.Vector3(0.3, 0.4, 0), 0.012, mat.metal));
@@ -680,21 +701,21 @@ var BUILD = [
 
   /* ---------- swappable props ---------- */
   var grilleTex = canvasTex(128, 128, function (ctx, w) {
-    ctx.fillStyle = '#3a3430'; ctx.fillRect(0, 0, w, w); ctx.fillStyle = '#141210';
+    ctx.fillStyle = '#d6d0c9'; ctx.fillRect(0, 0, w, w); ctx.fillStyle = '#8f8a84';
     for (var y = 0; y < w; y += 8) for (var x = (y / 8) % 2 * 4; x < w; x += 8) { ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill(); }
   });
   grilleTex.wrapS = grilleTex.wrapT = THREE.RepeatWrapping; grilleTex.repeat.set(6, 3);
 
   function makeMic(v) {
     var g = new THREE.Group();
-    var bodyC = v === 'kondensor' ? C.cream2 : v === 'broadcast' ? C.accent : C.ink;
+    var bodyC = v === 'kondensor' ? C.cream2 : v === 'broadcast' ? C.accent : 0x2a2522;
     var ringC = v === 'kondensor' ? C.taupeD : v === 'broadcast' ? C.ink : C.accent;
     var bm = M(bodyC, v === 'kondensor' ? .35 : .28, v === 'kondensor' ? .1 : .5);
     var r = v === 'kondensor' ? 0.05 : 0.044, len = v === 'broadcast' ? 0.27 : 0.2;
     g.add(mesh(new THREE.CylinderGeometry(r * .92, r, len, 32), bm, 0, len / 2, 0));
     g.add(mesh(new THREE.CylinderGeometry(r + .004, r + .004, 0.026, 32), M(ringC, .3, .4), 0, len + .013, 0));
     var gl = v === 'kondensor' ? 0.15 : 0.1;
-    var grille = M(C.ink3, .5, .6, { map: grilleTex });
+    var grille = M(0xffffff, .45, .85, { map: grilleTex, envMapIntensity: 1.1 });
     g.add(mesh(new THREE.CylinderGeometry(r, r, gl, 32, 1, true), grille, 0, len + .026 + gl / 2, 0));
     var cap = mesh(new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), grille, 0, len + .026 + gl, 0); g.add(cap);
     if (v === 'broadcast') {
@@ -724,10 +745,10 @@ var BUILD = [
     if (v === 'lounge') {
       g.add(mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.03, 40), mat.metal, 0, 0.015, 0));
       g.add(mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.36, 16), mat.metal, 0, 0.2, 0));
-      g.add(mesh(new THREE.CylinderGeometry(0.36, 0.34, 0.14, 40), mat.ink, 0, 0.44, 0));
-      g.add(mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 40), mat.taupe, 0, 0.53, 0));
-      var back = mesh(new THREE.CylinderGeometry(0.37, 0.36, 0.62, 40, 1, true, Math.PI * 1.1, Math.PI * .8), M(C.ink, .55, .1, { side: THREE.DoubleSide }), 0, 0.82, 0); g.add(back);
-      var backC = mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.5, 40, 1, true, Math.PI * 1.15, Math.PI * .7), M(C.taupe, .7, 0, { side: THREE.DoubleSide }), 0, 0.82, 0); g.add(backC);
+      g.add(mesh(new THREE.CylinderGeometry(0.36, 0.34, 0.14, 40), mat.white, 0, 0.44, 0));
+      g.add(mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 40), M(C.accent, .85), 0, 0.53, 0));
+      var back = mesh(new THREE.CylinderGeometry(0.37, 0.36, 0.62, 40, 1, true, Math.PI * 1.1, Math.PI * .8), M(0xfbf9f6, .5, 0, { side: THREE.DoubleSide }), 0, 0.82, 0); g.add(back);
+      var backC = mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.5, 40, 1, true, Math.PI * 1.15, Math.PI * .7), M(0xf7f2ec, .8, 0, { side: THREE.DoubleSide }), 0, 0.82, 0); g.add(backC);
       g.userData.mouth = 1.12;
     } else if (v === 'kerja') {
       for (var i = 0; i < 5; i++) {
@@ -736,10 +757,10 @@ var BUILD = [
         g.add(mesh(new THREE.SphereGeometry(0.028, 12, 8), mat.ink, Math.cos(a) * 0.29, 0.03, Math.sin(a) * 0.29));
       }
       g.add(mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.38, 16), mat.steel, 0, 0.27, 0));
-      var seat = slab(0.5, 0.48, 0.1, 0.08, mat.ink, 0.01); seat.position.y = 0.47; g.add(seat);
-      var back2 = slab(0.46, 0.06, 0.03, 0.58, M(C.ink, .7)); back2.rotation.z = 0; back2.position.set(-0.25, 0.6, 0); back2.rotation.y = Math.PI / 2; back2.rotation.z = 0.12; g.add(back2);
+      var seat = slab(0.5, 0.48, 0.1, 0.08, mat.white, 0.01); seat.position.y = 0.47; g.add(seat);
+      var back2 = slab(0.46, 0.06, 0.03, 0.58, mat.white); back2.rotation.z = 0; back2.position.set(-0.25, 0.6, 0); back2.rotation.y = Math.PI / 2; back2.rotation.z = 0.12; g.add(back2);
       g.add(mesh(new THREE.BoxGeometry(0.02, 0.06, 0.4), mat.led, -0.215, 0.8, 0));
-      [-1, 1].forEach(function (s) { g.add(mesh(new THREE.BoxGeometry(0.28, 0.03, 0.05), mat.ink, 0, 0.7, s * 0.25)); g.add(mesh(new THREE.BoxGeometry(0.03, 0.16, 0.03), mat.metal, 0, 0.6, s * 0.25)); });
+      [-1, 1].forEach(function (s) { g.add(mesh(new THREE.BoxGeometry(0.28, 0.03, 0.05), mat.metal, 0, 0.7, s * 0.25)); g.add(mesh(new THREE.BoxGeometry(0.03, 0.16, 0.03), mat.metal, 0, 0.6, s * 0.25)); });
       g.userData.mouth = 1.18;
     } else {
       [0, 1, 2, 3].forEach(function (i) {
@@ -747,9 +768,9 @@ var BUILD = [
         g.add(between(new THREE.Vector3(Math.cos(a) * 0.22, 0, Math.sin(a) * 0.22), new THREE.Vector3(Math.cos(a) * 0.14, 0.72, Math.sin(a) * 0.14), 0.014, mat.metal));
       });
       var foot = mesh(new THREE.TorusGeometry(0.18, 0.012, 8, 40), mat.steel, 0, 0.3, 0); foot.rotation.x = Math.PI / 2; g.add(foot);
-      g.add(mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.07, 40), M(C.taupeD, .6), 0, 0.76, 0));
+      g.add(mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.07, 40), M(0xe6d9c8, .6), 0, 0.76, 0));
       g.add(mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.025, 40), M(C.cream2, .7), 0, 0.805, 0));
-      var lb = mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.12, 30, 1, true, Math.PI * 1.2, Math.PI * .6), M(C.taupeD, .6, 0, { side: THREE.DoubleSide }), 0, 0.95, 0); g.add(lb);
+      var lb = mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.12, 30, 1, true, Math.PI * 1.2, Math.PI * .6), M(0xe6d9c8, .6, 0, { side: THREE.DoubleSide }), 0, 0.95, 0); g.add(lb);
       g.userData.mouth = 1.4;
     }
     return g;
@@ -801,7 +822,7 @@ var BUILD = [
   placeChairs(sel.chair); placeMics(sel.mic); placeHead(sel.head);
 
   /* ---------- lights + moods ---------- */
-  var hemi = new THREE.HemisphereLight(C.cream, C.ink, 0.35); scene.add(hemi);
+  var hemi = new THREE.HemisphereLight(C.cream, 0xe9dfd5, 0.6); scene.add(hemi);
   var key = new THREE.SpotLight(C.cream, 1.5, 22, 0.62, 0.55, 1.2); key.position.set(3.2, 6.5, 5.2); key.target.position.set(0, 0.8, 0);
   key.castShadow = true; key.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
   scene.add(key, key.target);
@@ -810,9 +831,9 @@ var BUILD = [
   var front = new THREE.PointLight(C.deep, 0.5, 12, 2); front.position.set(0, 1.4, 4.5);
   scene.add(rimL, rimR, front);
   var MOODS = {
-    hangat: { key: 1.5, hemi: .35, rim: 1.3, rimC: C.accent, led: 1.6, lamp: .7, exp: 1.0, bg: C.ink, fogN: 13, fogF: 30, front: .5 },
-    malam: { key: .55, hemi: .14, rim: 2.4, rimC: C.deep, led: 2.4, lamp: .35, exp: .92, bg: 0x171412, fogN: 9, fogF: 24, front: .9 },
-    terang: { key: 2.3, hemi: .75, rim: .45, rimC: C.accent, led: .8, lamp: 1.1, exp: 1.12, bg: C.ink3, fogN: 16, fogF: 36, front: .2 }
+    hangat: { key: 1.25, hemi: .6, rim: .9, rimC: C.accent, led: 1.4, lamp: .6, exp: 1.0, bg: 0xf3efea, fogN: 16, fogF: 34, front: .3 },
+    malam: { key: .7, hemi: .38, rim: 2.0, rimC: C.deep, led: 2.2, lamp: .9, exp: .95, bg: 0xe8ddd2, fogN: 12, fogF: 28, front: .7 },
+    terang: { key: 1.8, hemi: .9, rim: .3, rimC: C.accent, led: .8, lamp: 1.0, exp: 1.06, bg: 0xf8f5f1, fogN: 18, fogF: 40, front: .15 }
   };
   var moodNow = Object.assign({}, MOODS[sel.light]), moodTo = MOODS[sel.light];
   var tmpC = new THREE.Color(), tmpC2 = new THREE.Color();
@@ -837,7 +858,7 @@ var BUILD = [
     speaker: function () { return { p: [0.4, 1.6, narrow() ? 3.4 : 2.5], t: [1.75, 0.75, 0] }; },
     clock: function () { var c = clock.getWorldPosition(new THREE.Vector3()); var d = narrow() ? 2.6 : 1.8; var n = c.clone().setY(0).normalize(); return { p: [c.x - n.x * d, c.y - 0.25, c.z - n.z * d], t: [c.x, c.y, c.z] }; },
     agenda: function () { var s = screen.getWorldPosition(new THREE.Vector3()); return { p: [s.x + 0.15, s.y + 0.18, s.z + (narrow() ? 1.75 : 1.15)], t: [s.x, s.y, s.z] }; },
-    chairs: function () { return narrow() ? { p: [0.3, 2.6, 6.4], t: [0, 0.7, 0] } : { p: [0.4, 2.0, 4.6], t: [0, 0.7, 0] }; },
+    chairs: function () { return narrow() ? { p: [0.3, 3.4, 9.2], t: [0, 0.9, 0] } : { p: [0.4, 2.0, 4.6], t: [0, 0.7, 0] }; },
     mood: function () { return narrow() ? { p: [5.5, 3.6, 8.5], t: [0, 1.1, -0.5] } : { p: [4.6, 2.9, 6.0], t: [0, 1.1, -0.6] }; }
   };
   var fly = null;
@@ -878,31 +899,31 @@ var BUILD = [
   /* ---------- panel content ---------- */
   function cdHTML() { return '<div class="itk-cd"><div><strong data-cd="d">00</strong><small>Hari</small></div><div><strong data-cd="h">00</strong><small>Jam</small></div><div><strong data-cd="m">00</strong><small>Menit</small></div><div><strong data-cd="s">00</strong><small>Detik</small></div></div>'; }
   var arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
-  var silhouette = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="40" r="17" fill="#201d1b" fill-opacity=".85"/><path d="M16 100c2-24 16-36 34-36s32 12 34 36z" fill="#201d1b" fill-opacity=".85"/></svg>';
+  var silhouette = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="40" r="17" fill="#201d1b" fill-opacity=".18"/><path d="M16 100c2-24 16-36 34-36s32 12 34 36z" fill="#201d1b" fill-opacity=".18"/></svg>';
   var CONTENT = {
-    mic: { kicker: 'Mikrofon', title: 'Topik hari ini', body:
+    mic: { kicker: 'Mikrofon', title: 'topik <b>hari ini</b>', body:
       '<p class="itk-big">Apa itu ERP, dan kenalan dengan framework Odoo.</p>' +
       '<p>Banyak bisnis masih mengandalkan spreadsheet yang tersebar di tiap divisi. Di episode ini kita bahas apa itu ERP, kapan sebuah bisnis butuh, dan kenapa Odoo sering dipilih perusahaan yang sedang tumbuh.</p>' +
       '<ul class="itk-list itk-list--dots"><li>Tanda bisnis mulai butuh ERP</li><li>Cara kerja modul Odoo yang saling terhubung</li><li>Seberapa fleksibel Odoo mengikuti proses bisnis</li></ul>' },
-    listen: { kicker: 'Headphone', title: 'Cara dengar', body: function () { return '' +
+    listen: { kicker: 'Headphone', title: 'cara <b>dengar</b>', body: function () { return '' +
       '<p class="itk-big">Siaran langsung di ' + esc(ITK.platform) + '.</p>' +
       '<p>Buka tautannya saat acara mulai. Tidak perlu daftar, cukup klik dan dengarkan.</p>' +
       '<ul class="itk-list itk-list--dots"><li>Pakai headphone supaya suaranya lebih jelas</li><li>Siapkan pertanyaan untuk sesi tanya jawab</li><li>Ajak rekan kerja yang sedang memikirkan ERP</li></ul>' +
       '<div class="itk-actions"><a class="itk-btn itk-btn--primary" href="' + esc(ITK.streamUrl) + '" target="_blank" rel="noopener">Tonton live</a><a class="itk-btn itk-btn--line" href="' + esc(waLink()) + '" target="_blank" rel="noopener">Bagikan via WhatsApp</a></div>'; } },
-    speaker: { kicker: 'Kursi tamu', title: 'Siapa yang bicara?', body: function () { return '' +
+    speaker: { kicker: 'Kursi tamu', title: 'siapa yang <b>bicara?</b>', body: function () { return '' +
       '<div class="itk-person"><div class="itk-avatar" data-avatar></div><div><strong>Handi</strong><span>Direktur PT Pritech Indonesia</span></div></div>' +
       '<p>' + esc($('[data-bio]').textContent) + '</p>' +
       '<p>Di sesi tanya jawab, Handi akan menjawab pertanyaan langsung, termasuk kasus dari bisnismu sendiri.</p>'; } },
-    clock: { kicker: 'Jam dinding', title: 'Catat waktunya', body: function () { return '' +
+    clock: { kicker: 'Jam dinding', title: 'catat <b>waktunya</b>', body: function () { return '' +
       '<p class="itk-big">' + esc(D.dateLong) + '<br>' + esc(D.timeLabel) + '</p>' + cdHTML() +
       '<div class="itk-actions"><button class="itk-btn itk-btn--ink" type="button" data-ics>Tambah ke kalender</button><a class="itk-btn itk-btn--line" href="' + esc(gcal) + '" target="_blank" rel="noopener">Google Calendar</a></div>'; } },
-    agenda: { kicker: 'Monitor', title: 'Susunan acara', body:
+    agenda: { kicker: 'Monitor', title: 'susunan <b>acara</b>', body:
       '<ol class="itk-list"><li><b>01</b><span>Pembukaan</span></li><li><b>02</b><span>Apa itu ERP dan kenapa bisnis butuh</span></li><li><b>03</b><span>Kenalan dengan framework Odoo: modul, fleksibilitas, dan cara Odoo tumbuh bersama perusahaan</span></li><li><b>04</b><span>Tanya jawab live</span></li><li><b>05</b><span>Penutup</span></li></ol>' },
-    info: { kicker: 'Info acara', title: 'I-Talk bersama Handi', body: function () { return '' +
+    info: { kicker: 'Info acara', title: 'I-Talk bersama <b>Handi</b>', body: function () { return '' +
       '<p class="itk-big">Apa itu ERP, dan kenalan dengan framework Odoo.</p>' +
       '<p>' + esc(D.dateLong) + ', ' + esc(D.timeLabel) + '. Live di ' + esc(ITK.platform) + '.</p>' + cdHTML() +
       '<div class="itk-actions"><button class="itk-btn itk-btn--ink" type="button" data-ics>Tambah ke kalender</button><a class="itk-btn itk-btn--line" href="' + esc(gcal) + '" target="_blank" rel="noopener">Google Calendar</a><a class="itk-btn itk-btn--primary" href="' + esc(ITK.streamUrl) + '" target="_blank" rel="noopener">Tonton live</a></div>'; } },
-    done: { kicker: 'Setup selesai', title: 'Studiomu sudah siap', body: function () {
+    done: { kicker: 'Setup selesai', title: 'studiomu <b>sudah siap</b>', body: function () {
       var rows = BUILD.map(function (b) { return '<div><span>' + b.label + '</span><strong>' + esc(optName(b.key)) + '</strong></div>'; }).join('');
       var extra = 'Studio versiku: ' + BUILD.map(function (b) { return b.label + ' ' + optName(b.key); }).join(', ') + '.';
       return '<p>Seperti ERP, studio yang enak dipakai dirakit dari modul yang saling cocok. Sekarang tinggal satu yang kurang: kamu di kursi pendengar.</p>' +
@@ -1062,7 +1083,7 @@ var BUILD = [
     else camera.clearViewOffset();
     // sign blink + pop-in animation
     if (!reduce) {
-      var b = 0.75 + 0.35 * Math.sin(now / 380);
+      var b = 0.45 + 0.15 * Math.sin(now / 380);
       signFaceMat.emissiveIntensity = b; signLight.intensity = 0.7 + b * 0.6;
       monT += dt; if (monT > 0.12) { monT = 0; monTex.userData.draw(); }
     }
