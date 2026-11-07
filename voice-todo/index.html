@@ -7,8 +7,9 @@
 
       npx serve voice-todo        then open http://localhost:3000
 
-  Built in steps (see PROTOTYPE.md). This file is Step 1:
-  layout, tabs, quick add, tick, edit, delete, saved in localStorage.
+  Built in steps (see PROTOTYPE.md). Done so far:
+  Step 1: layout, tabs, quick add, tick, edit, delete, saved in localStorage
+  Step 2: carried-over tasks, Upcoming tab, Done section, change a task's date
 -->
 <html lang="id">
 <head>
@@ -35,6 +36,7 @@
   --muted: #6b777c;
   --line: #e4e8ea;
   --danger: #d1495b;
+  --late: #b7700a;      /* date label on carried-over tasks */
   --shadow: 0 10px 40px rgba(20, 30, 35, .08);
 
   /* Shapes and sizes */
@@ -57,6 +59,7 @@
     --muted: #8b989d;
     --line: #253034;
     --danger: #ef6f80;
+    --late: #e3a548;
     --shadow: 0 10px 40px rgba(0, 0, 0, .45);
   }
 }
@@ -97,11 +100,13 @@ button { -webkit-user-select: none; user-select: none; }
   flex-direction: column;
   overflow: hidden;
 }
-/* On a wide screen, float the app like a phone in the middle. */
+/* On a wide screen, float the app like a phone in the middle.
+   The space around it is padding on body, not margin on .app: a top margin
+   would "leak" out of body and make the page scroll by 24px. */
 @media (min-width: 480px) {
+  body { padding: 24px 0; }
   .app {
     height: min(100dvh - 48px, 880px);
-    margin: 24px auto;
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -125,12 +130,42 @@ button { -webkit-user-select: none; user-select: none; }
 .main { flex: 1; overflow-y: auto; padding: 4px 12px 24px; }
 
 /* =========================================================
-   4. TASK ROWS
+   4. SECTIONS (Tertunda, Hari ini, Selesai, and date groups)
+   ========================================================= */
+.section + .section { margin-top: 18px; }
+.section-title {
+  margin: 0;
+  padding: 6px 10px 4px;
+  font-size: .8rem; font-weight: 600; letter-spacing: .02em;
+  color: var(--muted);
+}
+
+/* The "Selesai" header is a button that opens and closes the list. */
+.section-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  border: 0; border-radius: var(--radius-sm); background: none;
+  color: var(--muted); font-size: .8rem; font-weight: 600; letter-spacing: .02em;
+  cursor: pointer;
+}
+@media (hover: hover) { .section-toggle:hover { background: var(--surface); } }
+.section-toggle .icon { width: 16px; height: 16px; transition: transform .2s var(--ease); }
+.section-toggle[aria-expanded="true"] .icon { transform: rotate(90deg); }
+.count {
+  min-width: 22px; padding: 1px 7px;
+  border-radius: 999px; background: var(--surface);
+  font-size: .75rem; text-align: center;
+}
+
+/* =========================================================
+   5. TASK ROWS
    ========================================================= */
 .task-list { list-style: none; margin: 0; padding: 0; }
 .task {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
   min-height: 56px;
   padding: 2px 4px;
@@ -144,6 +179,7 @@ button { -webkit-user-select: none; user-select: none; }
 .check {
   flex: none;
   width: var(--tap); height: var(--tap);
+  margin-top: 2px;
   display: grid; place-items: center;
   padding: 0; border: 0; background: none; cursor: pointer;
   border-radius: 50%;
@@ -171,24 +207,30 @@ button { -webkit-user-select: none; user-select: none; }
 @keyframes pop  { 40% { transform: scale(.78); } 100% { transform: scale(1); } }
 @keyframes draw { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
 
-/* The task text. It is a button so tapping it starts editing. */
+/* The middle part of a row: the task text (a button, tap to edit)
+   or, while editing, the input plus date chips. */
+.task-body { flex: 1; min-width: 0; }
 .title {
-  flex: 1; min-width: 0;
-  padding: 12px 6px;
+  display: flex; flex-direction: column; gap: 2px;
+  min-height: 52px; justify-content: center;
+  padding: 10px 6px;
   border: 0; background: none;
   text-align: left; font-size: 1rem; line-height: 1.4;
   overflow-wrap: anywhere;
   cursor: text;
   -webkit-user-select: text; user-select: text;
 }
-.task.is-done .title {
+.meta { font-size: .78rem; color: var(--muted); }
+.meta.is-late { color: var(--late); }
+.task.is-done .title-text {
   color: var(--muted);
   text-decoration: line-through;
   text-decoration-color: var(--muted);
 }
+
+.editing { padding: 6px 0 8px; }
 .edit-input {
-  flex: 1; min-width: 0;
-  margin: 4px 0;
+  width: 100%;
   padding: 9px 10px;
   border: 2px solid var(--accent);
   border-radius: 10px;
@@ -196,11 +238,23 @@ button { -webkit-user-select: none; user-select: none; }
   font-size: 1rem;
   outline: none;
 }
+.edit-dates { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface);
+  font-size: .85rem;
+  cursor: pointer;
+}
+.chip.is-active { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.date-picker { padding: 0 10px; }
 
 /* Small delete button at the end of each row. */
 .delete {
   flex: none;
   width: 40px; height: 40px;
+  margin-top: 6px;
   display: grid; place-items: center;
   border: 0; border-radius: 50%; background: none;
   color: var(--muted); opacity: .6; cursor: pointer;
@@ -211,12 +265,12 @@ button { -webkit-user-select: none; user-select: none; }
   background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
-/* New tasks slide in gently. */
+/* New or moved tasks slide in gently. */
 .task.enter { animation: slide-in .35s var(--ease); }
 @keyframes slide-in { from { opacity: 0; transform: translateY(8px); } }
 
 /* Empty screens */
-.empty { padding: 64px 24px; text-align: center; color: var(--muted); line-height: 1.5; }
+.empty { padding: 56px 24px; text-align: center; color: var(--muted); line-height: 1.5; }
 .empty strong { display: block; margin-bottom: 4px; color: var(--text); font-weight: 600; }
 
 /* Shared icon style for the small line icons. */
@@ -227,7 +281,7 @@ button { -webkit-user-select: none; user-select: none; }
 }
 
 /* =========================================================
-   5. FOOTER: QUICK ADD + TAB BAR
+   6. FOOTER: QUICK ADD + TAB BAR
    ========================================================= */
 .footer {
   flex: none;
@@ -293,7 +347,7 @@ button { -webkit-user-select: none; user-select: none; }
 .mic .icon { width: 28px; height: 28px; }
 
 /* =========================================================
-   6. TOAST (small message with an optional action)
+   7. TOAST (small message with an optional action)
    ========================================================= */
 .toast {
   position: absolute; left: 16px; right: 16px; bottom: 160px;
@@ -386,6 +440,7 @@ const STORAGE_KEYS = {
   // Later steps add: captures: 'vt.captures', notes: 'vt.notes', settings: 'vt.settings'
 };
 const TOAST_MS = 5000;              // how long a toast stays on screen
+const SETTLE_MS = 700;              // how long a ticked task stays in place before moving to "Selesai"
 
 // Shortcut for document.querySelector.
 const $ = (selector) => document.querySelector(selector);
@@ -447,14 +502,29 @@ function showStorageWarning() {
    3. DATES
    Dates are stored as plain text 'YYYY-MM-DD' (same as the
    real app). Timestamps are full ISO strings in UTC.
+   'YYYY-MM-DD' strings can be compared with < and > directly,
+   because they sort the same way as the dates they stand for.
    ========================================================= */
 
-// Today's date in Jakarta, e.g. '2026-11-07'.
+// Formats a moment as a Jakarta date, e.g. '2026-11-07'.
 // The 'en-CA' locale happens to format dates as YYYY-MM-DD.
+const JAKARTA_DATE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+});
+
+// Today's date in Jakarta.
 function todayISO() {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date());
+  return JAKARTA_DATE.format(new Date());
+}
+
+// The Jakarta date of a timestamp, e.g. when a task was ticked.
+function dateOfStamp(stamp) {
+  return stamp ? JAKARTA_DATE.format(new Date(stamp)) : null;
+}
+
+// Moment in time for created_at, updated_at, done_at.
+function nowStamp() {
+  return new Date().toISOString();
 }
 
 // Header label in Indonesian, e.g. 'Sabtu, 7 Nov'.
@@ -464,9 +534,41 @@ function todayLabel() {
   }).format(new Date());
 }
 
-// Moment in time for created_at, updated_at, done_at.
-function nowStamp() {
-  return new Date().toISOString();
+// Date math on 'YYYY-MM-DD' strings. We treat the date as midnight UTC
+// so time zones and daylight saving can never shift it by a day.
+function isoToDate(iso) {
+  return new Date(`${iso}T00:00:00Z`);
+}
+function addDays(iso, days) {
+  const d = isoToDate(iso);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function daysBetween(fromIso, toIso) {
+  return Math.round((isoToDate(toIso) - isoToDate(fromIso)) / 86400000);
+}
+
+// 'Senin 10 Nov' (weekday 'long') or 'Sen 10 Nov' (weekday 'short').
+// Adds the year when it is not this year: 'Senin 4 Jan 2027'.
+function formatDay(iso, weekday = 'long') {
+  const options = { timeZone: 'UTC', weekday, day: 'numeric', month: 'short' };
+  if (iso.slice(0, 4) !== todayISO().slice(0, 4)) options.year = 'numeric';
+  return new Intl.DateTimeFormat('id-ID', options)
+    .formatToParts(isoToDate(iso))
+    .filter((part) => part.type !== 'literal')   // drop the comma and spaces
+    .map((part) => part.value.replace('.', ''))  // some browsers write 'Agu.'
+    .join(' ');
+}
+
+// Friendly name for a date compared to today: Kemarin, Hari ini, Besok, Lusa,
+// or the full date for anything further away.
+function dayLabel(iso, weekday = 'long') {
+  const diff = daysBetween(todayISO(), iso);
+  if (diff === -1) return 'Kemarin';
+  if (diff === 0) return 'Hari ini';
+  if (diff === 1) return 'Besok';
+  if (diff === 2) return 'Lusa';
+  return formatDay(iso, weekday);
 }
 
 /* =========================================================
@@ -478,7 +580,9 @@ function nowStamp() {
 const state = {
   tasks: [],            // all tasks, in the order they were added
   tab: 'today',         // 'today' | 'upcoming' | 'notes' | 'settings'
+  doneOpen: false,      // is the "Selesai" section expanded?
   editingId: null,      // id of the task being edited, or null
+  settling: new Set(),  // just-ticked tasks that wait a moment before moving
   justAddedId: null,    // used once to play the slide-in animation
   justToggledId: null,  // used once to play the tick animation
 };
@@ -492,7 +596,57 @@ function findTask(id) {
 }
 
 /* =========================================================
-   5. TASK ACTIONS
+   5. WHICH TASK GOES WHERE
+   Nothing about "carried over" is stored. A task just keeps
+   its task_date, and we work out its place every render:
+
+   Tertunda  : not done, task_date before today
+   Hari ini  : not done, task_date is today
+   Mendatang : not done, task_date after today
+   Selesai   : ticked today (done_at is today in Jakarta)
+
+   So at midnight, unfinished tasks move to "Tertunda" by
+   themselves, with no extra code.
+   ========================================================= */
+
+// A just-ticked task is already done in the data, but we keep it
+// in its old place for a moment so you can see the tick animation.
+function placedAsDone(task) {
+  return task.is_done && !state.settling.has(task.id);
+}
+
+function todaySections() {
+  const today = todayISO();
+  const open = state.tasks.filter((t) => !placedAsDone(t));
+  return {
+    // Oldest first, so the longest-waiting task is on top.
+    carried: open
+      .filter((t) => t.task_date < today)
+      .sort((a, b) => a.task_date.localeCompare(b.task_date)),
+    today: open.filter((t) => t.task_date === today),
+    // Most recently ticked first.
+    done: state.tasks
+      .filter((t) => placedAsDone(t) && dateOfStamp(t.done_at) === today)
+      .sort((a, b) => b.done_at.localeCompare(a.done_at)),
+  };
+}
+
+// Future tasks grouped by date: [['2026-11-08', [task, task]], ...]
+function upcomingGroups() {
+  const today = todayISO();
+  const groups = new Map();
+  state.tasks
+    .filter((t) => !placedAsDone(t) && t.task_date > today)
+    .sort((a, b) => a.task_date.localeCompare(b.task_date))
+    .forEach((t) => {
+      if (!groups.has(t.task_date)) groups.set(t.task_date, []);
+      groups.get(t.task_date).push(t);
+    });
+  return [...groups];
+}
+
+/* =========================================================
+   6. TASK ACTIONS
    ========================================================= */
 
 // Build a task object with every field the real app has.
@@ -523,6 +677,7 @@ function cleanTitle(text) {
 function addTask(text) {
   const title = cleanTitle(text);
   if (!title) return;
+  saveOpenEdit();
   const task = createTask(title);
   state.tasks.push(task);
   state.justAddedId = task.id;
@@ -531,13 +686,26 @@ function addTask(text) {
 }
 
 function toggleTask(id) {
+  saveOpenEdit();
   const task = findTask(id);
   if (!task) return;
   task.is_done = !task.is_done;
   task.done_at = task.is_done ? nowStamp() : null;
   task.updated_at = nowStamp();
-  state.justToggledId = id;
   saveTasks();
+  state.justToggledId = id;
+
+  if (task.is_done) {
+    // Stay in place for a moment, then move to "Selesai".
+    state.settling.add(id);
+    setTimeout(() => {
+      state.settling.delete(id);
+      if (findTask(id)?.is_done) state.justAddedId = id; // slide into "Selesai"
+      render();
+    }, SETTLE_MS);
+  } else {
+    state.settling.delete(id);
+  }
   render();
 }
 
@@ -551,10 +719,41 @@ function renameTask(id, text) {
   saveTasks();
 }
 
+// Give a task another date. Shows a toast with Undo.
+function moveTask(id, newDate) {
+  saveOpenEdit();
+  const task = findTask(id);
+  if (!task || !newDate || task.task_date === newDate) { render(); return; }
+
+  const oldDate = task.task_date;
+  task.task_date = newDate;
+  task.updated_at = nowStamp();
+  state.justAddedId = id;
+  saveTasks();
+  render();
+
+  // 'Besok' reads better as 'besok' in the middle of a sentence.
+  const label = dayLabel(newDate);
+  const nice = ['Kemarin', 'Hari ini', 'Besok', 'Lusa'].includes(label) ? label.toLowerCase() : label;
+  showToast(`Dipindah ke ${nice}`, {
+    actionLabel: 'Urungkan',
+    onAction: () => {
+      const t = findTask(id);
+      if (!t) return;
+      t.task_date = oldDate;
+      t.updated_at = nowStamp();
+      state.justAddedId = id;
+      saveTasks();
+      render();
+    },
+  });
+}
+
 // The last deleted task and where it was, so Undo can put it back.
 let lastDeleted = null;
 
 function deleteTask(id) {
+  saveOpenEdit();
   const index = state.tasks.findIndex((t) => t.id === id);
   if (index === -1) return;
   const [task] = state.tasks.splice(index, 1);
@@ -575,33 +774,44 @@ function undoDelete() {
 }
 
 /* =========================================================
-   6. EDITING A TITLE
-   Tap the text: it turns into an input.
-   Enter or tapping elsewhere saves. Esc cancels.
+   7. EDITING A TASK
+   Tap the text: it turns into an input with date chips
+   (Hari ini, Besok, Lusa, or pick a date).
+   Enter or tapping outside the row saves. Esc cancels.
    ========================================================= */
 
 function startEdit(id) {
-  if (state.editingId) finishEdit(true);
+  saveOpenEdit();
   state.editingId = id;
   render();
+}
+
+// Save whatever is typed in the open edit field (if any) and close it.
+// Used before any other action, so typed text is never lost.
+function saveOpenEdit() {
+  if (!state.editingId) return;
+  const input = $('#main .edit-input');
+  if (input) renameTask(state.editingId, input.value);
+  state.editingId = null;
 }
 
 function finishEdit(save) {
   const id = state.editingId;
   if (!id) return;               // already finished (guards double calls)
+  const row = $('#main .editing')?.closest('.task');
+  if (save) saveOpenEdit();
   state.editingId = null;
 
-  const input = $('#main .edit-input');
-  if (save && input) renameTask(id, input.value);
-
-  // Swap only the input back to text instead of redrawing the whole list.
-  // This way a tap on another row (or on delete) still lands where you aimed.
+  // Swap only this row's edit area back to text instead of redrawing the
+  // whole list. This way a tap on another row still lands where you aimed.
   const task = findTask(id);
-  if (input && input.isConnected && task) input.replaceWith(titleButton(task));
+  if (row && row.isConnected && task) {
+    row.querySelector('.task-body').replaceWith(titleButton(task, row.dataset.section));
+  }
 }
 
 /* =========================================================
-   7. RENDERING
+   8. RENDERING
    render() redraws the screen from the state. Simple and
    predictable: the data is the truth, the screen follows.
    ========================================================= */
@@ -615,27 +825,31 @@ const TAB_TITLES = {
 
 const CHECK_SVG = '<span class="ring"><svg viewBox="0 0 16 16"><polyline points="3.5 8.5 6.5 11.5 12.5 5"/></svg></span>';
 const X_SVG = '<svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px"><line x1="7" y1="7" x2="17" y2="17"/><line x1="17" y1="7" x2="7" y2="17"/></svg>';
+const CHEVRON_SVG = '<svg class="icon" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>';
 
 function render() {
+  // If something redraws the list while you are typing in an edit field
+  // (for example a ticked task moving to "Selesai"), keep what you typed.
+  const openInput = $('#main .edit-input');
+  const openRow = openInput?.closest('.task');
+  state.editDraft = openRow && openRow.dataset.id === state.editingId ? openInput.value : null;
+
   renderHeader();
   renderTabs();
   renderMain();
   $('#quickAdd').hidden = state.tab !== 'today';
+
   // The one-time animation flags are used up after one render.
   state.justAddedId = null;
   state.justToggledId = null;
-}
-
-function todaysTasks() {
-  const today = todayISO();
-  return state.tasks.filter((t) => t.task_date === today);
 }
 
 function renderHeader() {
   $('#headerTitle').textContent = TAB_TITLES[state.tab];
   let eyebrow = todayLabel();
   if (state.tab === 'today') {
-    const left = todaysTasks().filter((t) => !t.is_done).length;
+    const { carried, today } = todaySections();
+    const left = carried.length + today.filter((t) => !t.is_done).length;
     if (left > 0) eyebrow += ` · ${left} tersisa`;
   }
   $('#headerEyebrow').textContent = eyebrow;
@@ -650,34 +864,88 @@ function renderTabs() {
 
 function renderMain() {
   const main = $('#main');
-  if (state.tab === 'today') return renderToday(main);
-  // The other tabs get real content in later steps.
-  const placeholders = {
-    upcoming: ['Belum ada tugas mendatang', 'Tugas dengan tanggal nanti akan muncul di sini.'],
-    notes: ['Belum ada catatan', 'Catatan kamu akan muncul di sini.'],
-    settings: ['Pengaturan', 'Bahasa, ekspor, dan impor data akan ada di sini.'],
-  };
-  main.replaceChildren(emptyState(...placeholders[state.tab]));
+  if (state.tab === 'today') renderToday(main);
+  else if (state.tab === 'upcoming') renderUpcoming(main);
+  else {
+    // These tabs get real content in later steps.
+    const placeholders = {
+      notes: ['Belum ada catatan', 'Catatan kamu akan muncul di sini.'],
+      settings: ['Pengaturan', 'Bahasa, ekspor, dan impor data akan ada di sini.'],
+    };
+    main.replaceChildren(emptyState(...placeholders[state.tab]));
+  }
+
+  // If a row is in edit mode, put the cursor in it.
+  const input = main.querySelector('.edit-input');
+  if (input) {
+    input.focus();
+    if (state.editDraft === null) input.select();  // fresh edit: select all
+  }
 }
 
 function renderToday(main) {
-  const tasks = todaysTasks();
-  if (tasks.length === 0) {
-    main.replaceChildren(emptyState('Belum ada tugas hari ini', 'Ketik di bawah, lalu tekan Enter.'));
-    return;
+  const { carried, today, done } = todaySections();
+  const parts = [];
+
+  if (carried.length) parts.push(section('Tertunda', carried, 'carried'));
+  // The "Hari ini" heading only helps when there is a section above it.
+  if (today.length) parts.push(section(carried.length ? 'Hari ini' : null, today, 'today'));
+
+  if (!carried.length && !today.length) {
+    parts.push(done.length
+      ? emptyState('Semua beres', 'Tidak ada tugas tersisa hari ini.')
+      : emptyState('Belum ada tugas hari ini', 'Ketik di bawah, lalu tekan Enter.'));
   }
 
-  const list = el('ul', { class: 'task-list' });
-  tasks.forEach((task) => list.append(taskRow(task)));
-  main.replaceChildren(list);
-
-  // If a row is in edit mode, put the cursor in it with the text selected.
-  const input = main.querySelector('.edit-input');
-  if (input) { input.focus(); input.select(); }
+  if (done.length) parts.push(doneSection(done));
+  main.replaceChildren(...parts);
 }
 
-function taskRow(task) {
-  const row = el('li', { class: 'task', 'data-id': task.id });
+function renderUpcoming(main) {
+  const groups = upcomingGroups();
+  if (!groups.length) {
+    main.replaceChildren(emptyState(
+      'Belum ada tugas mendatang',
+      'Tap teks tugas di Hari ini, lalu pilih Besok atau tanggal lain.'));
+    return;
+  }
+  main.replaceChildren(...groups.map(([date, tasks]) => section(dayLabel(date), tasks, 'upcoming')));
+}
+
+// A heading (optional) plus a list of task rows.
+// "kind" says which section the rows belong to; it changes the small label.
+function section(title, tasks, kind) {
+  const box = el('section', { class: 'section' });
+  if (title) {
+    const h = el('h2', { class: 'section-title' });
+    h.textContent = title;
+    box.append(h);
+  }
+  box.append(taskList(tasks, kind));
+  return box;
+}
+
+function taskList(tasks, kind) {
+  const list = el('ul', { class: 'task-list' });
+  tasks.forEach((task) => list.append(taskRow(task, kind)));
+  return list;
+}
+
+// "Selesai": a header button with a count. The list shows only when open.
+function doneSection(tasks) {
+  const box = el('section', { class: 'section' });
+  const toggle = el('button', {
+    class: 'section-toggle', type: 'button',
+    'data-action': 'toggle-done', 'aria-expanded': String(state.doneOpen),
+  });
+  toggle.innerHTML = `${CHEVRON_SVG}<span>Selesai</span><span class="count">${tasks.length}</span>`;
+  box.append(toggle);
+  if (state.doneOpen) box.append(taskList(tasks, 'done'));
+  return box;
+}
+
+function taskRow(task, kind) {
+  const row = el('li', { class: 'task', 'data-id': task.id, 'data-section': kind });
   if (task.is_done) row.classList.add('is-done');
   if (task.id === state.justAddedId) row.classList.add('enter');
   if (task.id === state.justToggledId) row.classList.add('pop');
@@ -689,26 +957,59 @@ function taskRow(task) {
   });
   check.innerHTML = CHECK_SVG;
 
-  let middle;
-  if (task.id === state.editingId) {
-    middle = el('input', { class: 'edit-input', type: 'text', maxlength: '200', 'aria-label': 'Ubah tugas' });
-    middle.value = task.title;
-  } else {
-    middle = titleButton(task);
-  }
+  const body = task.id === state.editingId ? editPanel(task) : titleButton(task, kind);
 
   const del = el('button', { class: 'delete', type: 'button', 'data-action': 'delete', 'aria-label': 'Hapus tugas' });
   del.innerHTML = X_SVG;
 
-  row.append(check, middle, del);
+  row.append(check, body, del);
   return row;
 }
 
-// The tappable task text. textContent (not innerHTML) keeps typed text safe.
-function titleButton(task) {
-  const btn = el('button', { class: 'title', type: 'button', 'data-action': 'edit' });
-  btn.textContent = task.title;
+// The tappable task text, with a small label under it when useful.
+// textContent (not innerHTML) keeps typed text safe.
+function titleButton(task, kind) {
+  const btn = el('button', { class: 'title task-body', type: 'button', 'data-action': 'edit' });
+  const text = el('span', { class: 'title-text' });
+  text.textContent = task.title;
+  btn.append(text);
+
+  const bits = [];
+  if (kind === 'carried') bits.push(dayLabel(task.task_date, 'short'));  // 'Kemarin', 'Kam 5 Nov'
+  if (task.due_time) bits.push(task.due_time);                          // '15:00' (from voice, Step 4)
+  if (bits.length) {
+    const meta = el('span', { class: kind === 'carried' ? 'meta is-late' : 'meta' });
+    meta.textContent = bits.join(' · ');
+    btn.append(meta);
+  }
   return btn;
+}
+
+// Edit mode: the title input plus quick date chips and a date picker.
+function editPanel(task) {
+  const box = el('div', { class: 'task-body editing' });
+
+  const input = el('input', { class: 'edit-input', type: 'text', maxlength: '200', 'aria-label': 'Ubah tugas' });
+  input.value = state.editDraft ?? task.title;
+
+  const dates = el('div', { class: 'edit-dates', role: 'group', 'aria-label': 'Tanggal' });
+  const today = todayISO();
+  const quick = [['Hari ini', today], ['Besok', addDays(today, 1)], ['Lusa', addDays(today, 2)]];
+  for (const [label, iso] of quick) {
+    const chip = el('button', { class: 'chip', type: 'button', 'data-action': 'set-date', 'data-date': iso });
+    if (task.task_date === iso) chip.classList.add('is-active');
+    chip.textContent = label;
+    dates.append(chip);
+  }
+
+  // The native date picker covers any other day.
+  const picker = el('input', { class: 'chip date-picker', type: 'date', 'aria-label': 'Pilih tanggal lain' });
+  picker.value = task.task_date;
+  if (!quick.some(([, iso]) => iso === task.task_date)) picker.classList.add('is-active');
+  dates.append(picker);
+
+  box.append(input, dates);
+  return box;
 }
 
 function emptyState(heading, text) {
@@ -720,7 +1021,7 @@ function emptyState(heading, text) {
 }
 
 /* =========================================================
-   8. TOAST
+   9. TOAST
    ========================================================= */
 
 let toastTimer = null;
@@ -751,7 +1052,7 @@ function hideToast() {
 }
 
 /* =========================================================
-   9. EVENTS
+   10. EVENTS
    One listener on the list handles every row ("event
    delegation"), so we don't attach listeners per task.
    ========================================================= */
@@ -760,12 +1061,36 @@ const main = $('#main');
 
 main.addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');
-  const row = event.target.closest('.task');
-  if (!button || !row) return;
-  const id = row.dataset.id;
-  if (button.dataset.action === 'toggle') toggleTask(id);
-  if (button.dataset.action === 'edit') startEdit(id);
-  if (button.dataset.action === 'delete') deleteTask(id);
+  if (!button) return;
+  const action = button.dataset.action;
+
+  if (action === 'toggle-done') {
+    state.doneOpen = !state.doneOpen;
+    render();
+    return;
+  }
+
+  const id = button.closest('.task')?.dataset.id;
+  if (!id) return;
+  if (action === 'toggle') toggleTask(id);
+  else if (action === 'edit') startEdit(id);
+  else if (action === 'delete') deleteTask(id);
+  else if (action === 'set-date') moveTask(id, button.dataset.date);
+});
+
+// Picking a day in the date picker moves the task right away.
+main.addEventListener('change', (event) => {
+  if (!event.target.classList.contains('date-picker')) return;
+  const value = event.target.value;
+  // While typing a year digit by digit the value can be '0002-...'; wait for a real one.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < '2000') return;
+  moveTask(event.target.closest('.task').dataset.id, value);
+});
+
+// Keep the cursor in the title field when a date chip is pressed,
+// so pressing a chip does not count as "tapping outside".
+main.addEventListener('mousedown', (event) => {
+  if (event.target.closest('button.chip')) event.preventDefault();
 });
 
 main.addEventListener('keydown', (event) => {
@@ -774,9 +1099,18 @@ main.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') { event.preventDefault(); finishEdit(false); }
 });
 
-// Tapping anywhere else while editing saves the change.
-main.addEventListener('focusout', (event) => {
-  if (event.target.classList.contains('edit-input')) finishEdit(true);
+// Tapping outside the row being edited saves the change.
+// We wait one tick so the browser has moved focus, then check where it went:
+// still inside the row being edited (date picker, chips) means keep editing.
+// We look up the row fresh, because the element that lost focus may be an
+// old one that render() already replaced (like the title you just tapped).
+main.addEventListener('focusout', () => {
+  if (!state.editingId) return;
+  setTimeout(() => {
+    const editingRow = main.querySelector('.editing')?.closest('.task');
+    if (!editingRow) return;
+    if (!editingRow.contains(document.activeElement)) finishEdit(true);
+  }, 0);
 });
 
 // Quick add: Enter submits the form.
@@ -793,14 +1127,15 @@ $('#quickAdd').addEventListener('submit', (event) => {
   quickInput.value = '';
   quickBtn.disabled = true;
   quickInput.focus();                 // ready for the next task
-  main.scrollTop = main.scrollHeight; // show the task you just added
+  // Scroll so the new task (last in "Hari ini") is visible.
+  main.querySelector('.task.enter')?.scrollIntoView({ block: 'nearest' });
 });
 
 // Tabs
 document.querySelectorAll('.tab').forEach((btn) => {
   btn.addEventListener('click', () => {
+    saveOpenEdit();
     state.tab = btn.dataset.tab;
-    state.editingId = null;
     render();
     main.scrollTop = 0;
   });
@@ -812,6 +1147,7 @@ $('#micBtn').addEventListener('click', () => {
 });
 
 // If the app stays open past midnight, refresh "today" when you come back.
+// Unfinished tasks then show up under "Tertunda" on their own.
 let shownDay = todayISO();
 function refreshIfNewDay() {
   if (todayISO() !== shownDay && !state.editingId) {
@@ -823,7 +1159,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 setInterval(refreshIfNewDay, 60 * 1000);
 
 /* =========================================================
-   10. START
+   11. START
    ========================================================= */
 
 const saved = loadData(STORAGE_KEYS.tasks, []);
